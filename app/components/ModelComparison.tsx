@@ -8,6 +8,7 @@ import SettingsPage from './SettingsPage';
 import AccountSettings from './AccountSettings';
 import EmailVerification from './EmailVerification';
 import CreditPurchase from './CreditPurchase';
+import AdSense from './AdSense';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 
 // Model configuration interface
@@ -1656,6 +1657,23 @@ function ModelComparisonContent() {
           </div>
         </div>
 
+        {/* Advertisement Banner */}
+        <div className="mb-8 flex justify-center">
+          <div className={clsx(
+            "rounded-2xl p-4 border backdrop-blur-sm",
+            darkMode 
+              ? "bg-gray-800/50 border-gray-700/30" 
+              : "bg-white/50 border-white/30"
+          )}>
+            <AdSense 
+              adSlot="1234567890" 
+              adFormat="auto"
+              style={{ display: 'block', minHeight: '90px', width: '100%', maxWidth: '728px' }}
+              className="text-center"
+            />
+          </div>
+        </div>
+
         {/* Message Input */}
         <div className={clsx(
           "backdrop-blur-sm rounded-2xl shadow-xl border p-8 mb-8 transition-all duration-300",
@@ -2060,6 +2078,25 @@ function ModelComparisonContent() {
                 );
                 })}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Advertisement - Bottom Banner */}
+        {responses.length > 0 && (
+          <div className="mt-8 mb-8 flex justify-center">
+            <div className={clsx(
+              "rounded-2xl p-4 border backdrop-blur-sm",
+              darkMode 
+                ? "bg-gray-800/50 border-gray-700/30" 
+                : "bg-white/50 border-white/30"
+            )}>
+              <AdSense 
+                adSlot="0987654321" 
+                adFormat="auto"
+                style={{ display: 'block', minHeight: '250px', width: '100%', maxWidth: '300px' }}
+                className="text-center"
+              />
             </div>
           </div>
         )}
