@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Fibero AI - Model Comparison",
   description: "Compare AI model responses side by side",
+  verification: {
+    google: "your-google-site-verification-code-here"
+  },
+  other: {
+    "google-adsense-account": "ca-pub-9108406017017093"
+  }
 };
 
 export default function RootLayout({
