@@ -53,8 +53,9 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
       setResendMessage('Verification email sent successfully!');
       setCountdown(60);
       setCanResend(false);
-    } catch (error: any) {
-      setResendMessage(error.message || 'Failed to send verification email. Please try again.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send verification email. Please try again.';
+      setResendMessage(errorMessage);
     } finally {
       setIsResending(false);
     }
@@ -72,8 +73,9 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
       } else {
         setResendMessage('Email not verified yet. Please check your inbox and click the verification link.');
       }
-    } catch (error: any) {
-      setResendMessage('Failed to check verification status. Please try again.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check verification status. Please try again.';
+      setResendMessage(errorMessage);
     } finally {
       setIsChecking(false);
     }
@@ -134,7 +136,7 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
           )}>
             <li>Check your email inbox (and spam folder)</li>
             <li>Click the verification link in the email</li>
-            <li>Return to this page - we'll automatically detect verification</li>
+            <li>Return to this page - we&apos;ll automatically detect verification</li>
           </ol>
         </div>
 
@@ -170,7 +172,7 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
                 <span>Checking...</span>
               </div>
             ) : (
-              'I\'ve Verified My Email'
+              "I&apos;ve Verified My Email"
             )}
           </button>
 

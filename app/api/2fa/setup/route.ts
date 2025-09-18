@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, updateDoc } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {

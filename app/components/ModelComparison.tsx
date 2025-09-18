@@ -207,7 +207,11 @@ interface ModelResponse {
   modelName: string;
   response: string | null;
   error: string | null;
-  usage?: any;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
   responseTime?: number;
   wordCount?: number;
   rating?: number;
@@ -220,9 +224,9 @@ interface ComparisonResult {
 
 interface ConversationEntry {
   id: string;
-  timestamp: Date;
-  prompt: string;
+  message: string;
   responses: ModelResponse[];
+  timestamp: Date;
   bestResponse?: string;
 }
 
@@ -235,7 +239,7 @@ interface PromptTemplate {
 }
 
 function ModelComparisonContent() {
-  const { user, logout, credits, creditsLoading, deductCredits, refreshCredits } = useAuth();
+  const { user, credits, creditsLoading, refreshCredits } = useAuth();
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [responses, setResponses] = useState<ModelResponse[]>([]);
@@ -248,13 +252,10 @@ function ModelComparisonContent() {
   const [showExport, setShowExport] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
   const [showComparison, setShowComparison] = useState(false);
-  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showPromptBuilder, setShowPromptBuilder] = useState(false);
   const [promptVariables, setPromptVariables] = useState<{[key: string]: string}>({});
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingText, setStreamingText] = useState<{[key: string]: string}>({});
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
   const [activeNavItem, setActiveNavItem] = useState('home');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
@@ -318,7 +319,7 @@ function ModelComparisonContent() {
       try {
         const parsedHistory = JSON.parse(savedHistory);
         // Convert timestamp strings back to Date objects
-        const historyWithDates = parsedHistory.map((entry: any) => ({
+        const historyWithDates = parsedHistory.map((entry: ConversationEntry) => ({
           ...entry,
           timestamp: new Date(entry.timestamp)
         }));
@@ -500,7 +501,7 @@ function ModelComparisonContent() {
         const newEntry: ConversationEntry = {
           id: Date.now().toString(),
           timestamp: new Date(),
-          prompt: message.trim(),
+          message: message.trim(),
           responses: enhancedResults,
           bestResponse: bestResult?.model,
         };
@@ -562,16 +563,12 @@ function ModelComparisonContent() {
   };
 
   const loadFromHistory = (entry: ConversationEntry) => {
-    setMessage(entry.prompt);
+    setMessage(entry.message);
     setResponses(entry.responses);
     setBestResponse(entry.bestResponse || null);
     setShowHistory(false);
   };
 
-  const useTemplate = (template: PromptTemplate) => {
-    setMessage(template.template);
-    setShowTemplates(false);
-  };
 
   const exportData = (format: 'json' | 'csv' | 'markdown') => {
     const currentData = {
@@ -638,21 +635,38 @@ function ModelComparisonContent() {
   };
 
   const filteredHistory = conversationHistory.filter(entry => 
-    entry.prompt.toLowerCase().includes(historySearch.toLowerCase())
+    entry.message.toLowerCase().includes(historySearch.toLowerCase())
   );
 
   // Voice Recognition Setup
   const startVoiceInput = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const recognition = new SpeechRecognition();
+      // Define a minimal interface for SpeechRecognition
+      interface ISpeechRecognition {
+        continuous: boolean;
+        interimResults: boolean;
+        lang: string;
+        onstart: (() => void) | null;
+        onend: (() => void) | null;
+        onresult: ((event: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => void) | null;
+        onerror: (() => void) | null;
+        start(): void;
+      }
+      
+      const windowWithSpeech = window as unknown as {
+        webkitSpeechRecognition: new() => ISpeechRecognition;
+        SpeechRecognition: new() => ISpeechRecognition;
+      };
+      
+      const SpeechRecognitionClass = windowWithSpeech.webkitSpeechRecognition || windowWithSpeech.SpeechRecognition;
+      const recognition = new SpeechRecognitionClass();
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
       
       recognition.onstart = () => setIsListening(true);
       recognition.onend = () => setIsListening(false);
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setMessage(prev => prev + (prev ? ' ' : '') + transcript);
       };
@@ -662,39 +676,7 @@ function ModelComparisonContent() {
     }
   };
 
-  // Text-to-Speech
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      speechSynthesis.speak(utterance);
-    }
-  };
 
-  // Response Quality Analysis
-  const analyzeResponse = (response: string): { sentiment: number; complexity: number; clarity: number } => {
-    const words = response.split(/\s+/);
-    const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    
-    // Simple sentiment analysis (positive words vs negative words)
-    const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'perfect', 'best', 'love', 'like'];
-    const negativeWords = ['bad', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'dislike', 'poor', 'fail', 'wrong'];
-    
-    const positiveCount = words.filter(word => positiveWords.includes(word.toLowerCase())).length;
-    const negativeCount = words.filter(word => negativeWords.includes(word.toLowerCase())).length;
-    const sentiment = (positiveCount - negativeCount) / words.length * 100 + 50; // 0-100 scale
-    
-    // Complexity based on average sentence length and vocabulary diversity
-    const avgSentenceLength = words.length / sentences.length;
-    const uniqueWords = new Set(words.map(w => w.toLowerCase())).size;
-    const complexity = Math.min(100, (avgSentenceLength * 2 + (uniqueWords / words.length) * 100) / 2);
-    
-    // Clarity based on readability (inverse of complexity with some adjustments)
-    const clarity = Math.max(0, 100 - complexity * 0.7);
-    
-    return { sentiment: Math.round(sentiment), complexity: Math.round(complexity), clarity: Math.round(clarity) };
-  };
 
   // Advanced Prompt Builder
   const processPromptWithVariables = (template: string, variables: {[key: string]: string}): string => {
@@ -705,55 +687,9 @@ function ModelComparisonContent() {
     return processed;
   };
 
-  // Streaming Effect
-  const simulateStreaming = (text: string, modelKey: string) => {
-    setIsStreaming(true);
-    setStreamingText(prev => ({ ...prev, [modelKey]: '' }));
-    
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < text.length) {
-        setStreamingText(prev => ({
-          ...prev,
-          [modelKey]: text.substring(0, index + 1)
-        }));
-        index++;
-      } else {
-        clearInterval(interval);
-        setIsStreaming(false);
-      }
-    }, 20);
-  };
 
-  // Comparison Functions
-  const toggleComparisonSelection = (modelKey: string) => {
-    setSelectedForComparison(prev => 
-      prev.includes(modelKey) 
-        ? prev.filter(k => k !== modelKey)
-        : prev.length < 2 ? [...prev, modelKey] : [prev[1], modelKey]
-    );
-  };
 
-  const generateShareableLink = () => {
-    const shareData = {
-      prompt: message,
-      models: selectedModels,
-      timestamp: Date.now()
-    };
-    const encoded = btoa(JSON.stringify(shareData));
-    const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encoded}`;
-    navigator.clipboard.writeText(shareUrl);
-    return shareUrl;
-  };
 
-  const getColumnWidth = () => {
-    const count = selectedModels.length;
-    if (count === 1) return 'w-full';
-    if (count === 2) return 'w-1/2';
-    if (count === 3) return 'w-1/3';
-    if (count === 4) return 'w-1/4';
-    return 'w-1/5';
-  };
 
   // Function to copy code to clipboard for code blocks
   const copyCodeToClipboard = (text: string, codeId: string) => {
@@ -772,7 +708,7 @@ function ModelComparisonContent() {
   };
 
   // Function to handle template selection
-  const handleTemplateSelect = (template: any) => {
+  const handleTemplateSelect = (template: PromptTemplate) => {
     setMessage(template.template);
     setShowTemplates(false);
   };
@@ -1021,7 +957,7 @@ function ModelComparisonContent() {
                         <div className={clsx(
                           "flex-1 text-sm leading-relaxed"
                         )}>
-                          {renderInlineFormatting(stepMatch[2], darkMode)}
+                          {renderInlineFormatting(stepMatch[2])}
                         </div>
                       </div>
                     </div>
@@ -1042,7 +978,7 @@ function ModelComparisonContent() {
                       "flex-1 text-sm leading-relaxed",
                       isBest && darkMode ? "text-gray-900" : darkMode ? "text-gray-200" : "text-gray-800"
                     )}>
-                      {renderInlineFormatting(bulletText, darkMode)}
+                      {renderInlineFormatting(bulletText)}
                     </div>
                   </div>
                 );
@@ -1082,7 +1018,7 @@ function ModelComparisonContent() {
                         </code>
                       </div>
                       <button
-                        onClick={() => copyCodeToClipboard(command)}
+                        onClick={() => copyCodeToClipboard(command, `command-${index}`)}
                         className={clsx(
                           "opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded text-xs",
                           darkMode ? "bg-gray-700 text-gray-300 hover:bg-gray-600" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -1101,7 +1037,7 @@ function ModelComparisonContent() {
                   "text-sm leading-relaxed",
                   isBest && darkMode ? "text-gray-900" : darkMode ? "text-gray-200" : "text-gray-800"
                 )}>
-                  {renderInlineFormatting(line, darkMode)}
+                  {renderInlineFormatting(line)}
                 </p>
               );
             })}
@@ -1112,7 +1048,7 @@ function ModelComparisonContent() {
   };
   
   // Helper function for inline formatting (bold, italic, inline code)
-  const renderInlineFormatting = (text: string, darkMode: boolean) => {
+  const renderInlineFormatting = (text: string) => {
     // Handle inline code first
     const parts = text.split(/(`[^`]+`)/g);
     
@@ -1234,7 +1170,11 @@ function ModelComparisonContent() {
           <button
             onClick={() => {
               setHoveredTooltip(null);
-              user ? setActiveNavItem('account') : setActiveNavItem('login');
+              if (user) {
+                setActiveNavItem('account');
+              } else {
+                setActiveNavItem('login');
+              }
             }}
             onMouseEnter={() => setHoveredTooltip(user ? 'nav-profile' : 'nav-login')}
             onMouseLeave={() => setHoveredTooltip(null)}
@@ -2210,7 +2150,7 @@ function ModelComparisonContent() {
                           "font-medium truncate flex-1 mr-4",
                           darkMode ? "text-white" : "text-gray-900"
                         )}>
-                          {entry.prompt.substring(0, 100)}{entry.prompt.length > 100 ? '...' : ''}
+                          {entry.message.substring(0, 100)}{entry.message.length > 100 ? '...' : ''}
                         </p>
                         <span className={clsx(
                           "text-xs whitespace-nowrap",
@@ -2759,7 +2699,7 @@ function ModelComparisonContent() {
                 "text-sm mb-6",
                 darkMode ? "text-gray-300" : "text-gray-600"
               )}>
-                Please log in to start comparing AI model responses. You'll be redirected to the login page in a moment.
+                Please log in to start comparing AI model responses. You&apos;ll be redirected to the login page in a moment.
               </p>
               <div className="flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
@@ -2796,7 +2736,7 @@ function ModelComparisonContent() {
                   "text-sm",
                   darkMode ? "text-gray-300" : "text-gray-600"
                 )}>
-                  You need more credits to use paid AI models. Free models don't require credits, but paid models cost 2 credits per comparison.
+                  You need more credits to use paid AI models. Free models don&apos;t require credits, but paid models cost 2 credits per comparison.
                 </p>
               </div>
 

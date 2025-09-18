@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { auth } from '../../../lib/firebase';
-import { applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
-import { clsx } from 'clsx';
+import { applyActionCode } from 'firebase/auth';
 
-export default function AuthAction() {
+function AuthActionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -51,9 +50,10 @@ export default function AuthAction() {
             setStatus('error');
             setMessage('Unknown action mode');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setStatus('error');
-        setMessage(error.message || 'An error occurred');
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+        setMessage(errorMessage);
       }
     };
 
@@ -62,10 +62,7 @@ export default function AuthAction() {
 
   if (status === 'loading') {
     return (
-      <div className={clsx(
-        "min-h-screen flex items-center justify-center",
-        darkMode ? "bg-slate-900" : "bg-slate-50"
-      )}>
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? "bg-slate-900" : "bg-slate-50"}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p className={darkMode ? "text-white" : "text-slate-800"}>
@@ -78,24 +75,15 @@ export default function AuthAction() {
 
   if (status === 'error') {
     return (
-      <div className={clsx(
-        "min-h-screen flex items-center justify-center p-4",
-        darkMode ? "bg-slate-900" : "bg-slate-50"
-      )}>
+      <div className={`min-h-screen flex items-center justify-center p-4 ${darkMode ? "bg-slate-900" : "bg-slate-50"}`}>
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">❌</span>
           </div>
-          <h1 className={clsx(
-            "text-2xl font-bold mb-2",
-            darkMode ? "text-white" : "text-slate-800"
-          )}>
+          <h1 className={`text-2xl font-bold mb-2 ${darkMode ? "text-white" : "text-slate-800"}`}>
             Verification Failed
           </h1>
-          <p className={clsx(
-            "mb-6",
-            darkMode ? "text-slate-300" : "text-slate-600"
-          )}>
+          <p className={`mb-6 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
             {message}
           </p>
           <button
@@ -111,10 +99,7 @@ export default function AuthAction() {
 
   // Success case - this will briefly show before redirect
   return (
-    <div className={clsx(
-      "min-h-screen flex items-center justify-center",
-      darkMode ? "bg-slate-900" : "bg-slate-50"
-    )}>
+    <div className={`min-h-screen flex items-center justify-center ${darkMode ? "bg-slate-900" : "bg-slate-50"}`}>
       <div className="text-center">
         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl">✅</span>
@@ -122,13 +107,29 @@ export default function AuthAction() {
         <p className={darkMode ? "text-white" : "text-slate-800"}>
           {message}
         </p>
-        <p className={clsx(
-          "text-sm mt-2",
-          darkMode ? "text-slate-400" : "text-slate-500"
-        )}>
+        <p className={`text-sm mt-2 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
           Redirecting...
         </p>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+        <p className="text-slate-800">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AuthAction() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AuthActionContent />
+    </Suspense>
   );
 }

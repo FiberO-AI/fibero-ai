@@ -138,8 +138,13 @@ export default function TwoFactorVerification({
               darkMode ? "text-gray-300" : "text-gray-700"
             )}>
               Verification Code
-              We&apos;ll send you a verification code to confirm it&apos;s really you.
             </label>
+            <p className={clsx(
+              "text-xs text-center mb-4",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
+              We&apos;ll send you a verification code to confirm it&apos;s really you.
+            </p>
             <div className="flex justify-center space-x-2" onPaste={handlePaste}>
               {code.map((digit, index) => (
                 <input
@@ -194,7 +199,7 @@ export default function TwoFactorVerification({
             "text-xs mb-2",
             darkMode ? "text-gray-500" : "text-gray-500"
           )}>
-            Can't access your authenticator app?
+            Can&apos;t access your authenticator app?
           </p>
           <button
             onClick={onBack}

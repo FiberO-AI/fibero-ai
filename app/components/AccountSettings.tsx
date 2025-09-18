@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
+import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface AccountSettingsProps {
@@ -13,7 +14,6 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
   const { user, logout, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || '');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState('');
   
@@ -37,6 +37,7 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
       await updateProfile({ displayName });
       setUpdateMessage('Profile updated successfully!');
     } catch (error) {
+      console.error('Failed to update profile:', error);
       setUpdateMessage('Failed to update profile. Please try again.');
     } finally {
       setIsUpdating(false);
@@ -100,6 +101,7 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
         setTwoFactorMessage(data.error || 'Failed to setup 2FA');
       }
     } catch (error) {
+      console.error('Failed to setup 2FA:', error);
       setTwoFactorMessage('Failed to setup 2FA. Please try again.');
     } finally {
       setIsSettingUp2FA(false);
@@ -134,6 +136,7 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
         setTwoFactorMessage(data.error || 'Invalid verification code');
       }
     } catch (error) {
+      console.error('Failed to verify code:', error);
       setTwoFactorMessage('Failed to verify code. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -166,6 +169,7 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
         setTwoFactorMessage(data.error || 'Invalid verification code');
       }
     } catch (error) {
+      console.error('Failed to disable 2FA:', error);
       setTwoFactorMessage('Failed to disable 2FA. Please try again.');
     } finally {
       setIsVerifying(false);
@@ -292,25 +296,6 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
                           : "bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:border-blue-500"
                       )}
                       placeholder="Enter your display name"
-                    />
-                  </div>
-                  <div>
-                    <label className={clsx(
-                      "block text-sm font-medium mb-2",
-                      darkMode ? "text-gray-300" : "text-gray-700"
-                    )}>
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      disabled
-                      className={clsx(
-                        "w-full p-3 rounded-xl border transition-all duration-200 opacity-60 cursor-not-allowed",
-                        darkMode 
-                          ? "bg-gray-700 border-gray-600 text-white" 
-                          : "bg-gray-50 border-gray-200 text-gray-900"
-                      )}
                     />
                   </div>
                 </div>
@@ -604,10 +589,12 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
                   </p>
                   {qrCode && (
                     <div className="flex justify-center mb-4">
-                      <img 
+                      <Image 
                         src={qrCode} 
                         alt="2FA QR Code" 
-                        className="w-48 h-48 border rounded-lg"
+                        width={192}
+                        height={192}
+                        className="border rounded-lg"
                       />
                     </div>
                   )}
@@ -624,7 +611,7 @@ export default function AccountSettings({ darkMode, onBack }: AccountSettingsPro
                     "text-sm mb-2",
                     darkMode ? "text-gray-400" : "text-gray-600"
                   )}>
-                    If you can't scan the QR code, enter this key manually:
+                    If you can&apos;t scan the QR code, enter this key manually:
                   </p>
                   <div className={clsx(
                     "p-3 rounded-lg border font-mono text-sm break-all",

@@ -53,8 +53,17 @@ npm install
 2. **Environment Setup**
 Create `.env.local` in the root directory:
 ```env
+# OpenRouter API
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 ```
 
 3. **Get OpenRouter API Key**

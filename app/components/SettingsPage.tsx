@@ -73,7 +73,7 @@ export default function SettingsPage({ darkMode, onBack, onToggleDarkMode, onSet
     }
   }, []);
 
-  const handleSettingChange = (key: string, value: any) => {
+  const handleSettingChange = (key: string, value: string | boolean | number | string[]) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     

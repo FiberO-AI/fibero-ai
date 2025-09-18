@@ -18,7 +18,6 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingUserId, setPendingUserId] = useState('');
   const [twoFactorError, setTwoFactorError] = useState('');
@@ -48,8 +47,9 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
         // Login successful without 2FA
         onBack();
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
@@ -61,8 +61,9 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
     try {
       await loginWithGoogle();
       onBack(); // Navigate back to home after successful login
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Google login failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -80,9 +81,9 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
     try {
       await resetPassword(email);
       alert('Password reset email sent! Check your inbox.');
-      setShowForgotPassword(false);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send password reset email. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -95,8 +96,9 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
     try {
       await verifyTwoFactor(pendingUserId, code);
       onBack(); // Navigate back to home after successful 2FA verification
-    } catch (err: any) {
-      setTwoFactorError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Two-factor verification failed. Please try again.';
+      setTwoFactorError(errorMessage);
     } finally {
       setTwoFactorLoading(false);
     }
@@ -256,7 +258,7 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
               disabled={isLoading}
               className="text-sm text-blue-500 hover:text-blue-600 transition-colors disabled:opacity-50"
             >
-              <span className="text-sm text-gray-500">Don't have an account?</span>
+              <span className="text-sm text-gray-500">Don&apos;t have an account?</span>
               Forgot password?
             </button>
           </div>
@@ -341,7 +343,7 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
             "text-sm",
             darkMode ? "text-gray-400" : "text-gray-600"
           )}>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
           </span>
           <button
             onClick={onNavigateToSignup}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticator } from 'otplib';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
 
 // Firebase configuration - using the same config as the main app
 const firebaseConfig = {

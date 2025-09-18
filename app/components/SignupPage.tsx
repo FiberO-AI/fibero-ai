@@ -67,8 +67,9 @@ export default function SignupPage({ darkMode, onBack, onNavigateToLogin, onNavi
       await signup(formData.email, formData.password, formData.firstName, formData.lastName);
       // Navigate to verification page instead of home
       onNavigateToVerification(formData.email);
-    } catch (err: any) {
-      setErrors({ general: err.message });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Signup failed. Please try again.';
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -81,8 +82,9 @@ export default function SignupPage({ darkMode, onBack, onNavigateToLogin, onNavi
     try {
       await loginWithGoogle();
       onBack(); // Navigate back to home after successful signup
-    } catch (err: any) {
-      setErrors({ general: err.message });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Google signup failed. Please try again.';
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }

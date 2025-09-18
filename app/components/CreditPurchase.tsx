@@ -21,7 +21,6 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
   const { user, addCredits } = useAuth();
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
 
   const creditPackages: CreditPackage[] = [
     {

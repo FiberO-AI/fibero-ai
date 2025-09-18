@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
 // Firebase configuration - using the same config as the main app
 const firebaseConfig = {
