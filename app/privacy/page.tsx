@@ -1,3 +1,5 @@
+import AdSense from '../components/AdSense';
+
 export default function Privacy() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
@@ -35,6 +37,18 @@ export default function Privacy() {
               If you have any questions about this Privacy Policy, please contact us at privacy@fibero-ai.com
             </p>
           </section>
+        </div>
+
+        {/* Advertisement */}
+        <div className="mt-8 flex justify-center">
+          <div className="bg-white rounded-2xl shadow-xl p-4">
+            <AdSense 
+              adSlot="1958348142" 
+              adFormat="auto"
+              style={{ display: 'block', minHeight: '250px', width: '100%', maxWidth: '336px' }}
+              className="text-center"
+            />
+          </div>
         </div>
       </div>
     </div>

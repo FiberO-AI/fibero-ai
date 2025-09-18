@@ -1666,7 +1666,7 @@ function ModelComparisonContent() {
               : "bg-white/50 border-white/30"
           )}>
             <AdSense 
-              adSlot="1234567890" 
+              adSlot="1958348142" 
               adFormat="auto"
               style={{ display: 'block', minHeight: '90px', width: '100%', maxWidth: '728px' }}
               className="text-center"
@@ -2092,7 +2092,7 @@ function ModelComparisonContent() {
                 : "bg-white/50 border-white/30"
             )}>
               <AdSense 
-                adSlot="0987654321" 
+                adSlot="1958348142" 
                 adFormat="auto"
                 style={{ display: 'block', minHeight: '250px', width: '100%', maxWidth: '300px' }}
                 className="text-center"
