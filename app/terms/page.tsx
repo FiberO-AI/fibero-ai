@@ -32,7 +32,7 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">Limitation of Liability</h2>
             <p className="text-gray-600 leading-relaxed">
               In no event shall Fibero AI or its suppliers be liable for any damages arising out of the use or 
-              inability to use the materials on Fibero AI's website.
+              inability to use the materials on Fibero AI&apos;s website.
             </p>
           </section>
         </div>
