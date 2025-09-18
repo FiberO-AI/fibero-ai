@@ -54,18 +54,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      setLoading(false);
-      
-      if (user) {
+      // Only set user if they are verified
+      if (user && user.emailVerified) {
+        setUser(user);
         // Initialize user credits document if it doesn't exist
         await initializeUserCredits(user.uid);
         // Set up real-time listener for credits
         setupCreditsListener(user.uid);
       } else {
+        // If user exists but is not verified, sign them out
+        if (user && !user.emailVerified) {
+          console.log('User not verified, signing out');
+          await signOut(auth);
+        }
+        setUser(null);
         setCredits(0);
         setCreditsLoading(false);
       }
+      setLoading(false);
     });
 
     return unsubscribe;
@@ -135,10 +141,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return unsubscribe;
   };
 
-  const login = async (email: string, password: string): Promise<{ requiresTwoFactor: boolean; userId?: string }> => {
+  const login = async (email: string, password: string): Promise<{ requiresTwoFactor: boolean; userId?: string; requiresEmailVerification?: boolean }> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      // FIRST: Check if email is verified
+      if (!user.emailVerified) {
+        // Sign out the user immediately
+        await signOut(auth);
+        throw new Error('Please verify your email address before logging in. Check your inbox for a verification link.');
+      }
       
       // Check if user has 2FA enabled
       const userDocRef = doc(db, 'users', user.uid);
@@ -224,6 +237,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.warn('Failed to send email verification:', emailError);
         // Don't throw error here - account creation was successful
       }
+      
+      // IMPORTANT: Sign out the user immediately after account creation
+      // They should only be logged in after email verification
+      await signOut(auth);
       
     } catch (error: any) {
       console.error('Signup error:', error);
