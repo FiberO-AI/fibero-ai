@@ -204,16 +204,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update profile - this is critical
       await firebaseUpdateProfile(user, {
         displayName: `${firstName} ${lastName}`
       });
-      // Send email verification after account creation with custom redirect
-      const actionCodeSettings = {
-        url: `${window.location.origin}/auth/action`,
-        handleCodeInApp: false
-      };
-      await sendEmailVerification(user, actionCodeSettings);
+      
+      // Send email verification - make this non-blocking
+      try {
+        // Use production URL if available, fallback to current origin
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const actionCodeSettings = {
+          url: `${baseUrl}/auth/action`,
+          handleCodeInApp: false
+        };
+        await sendEmailVerification(user, actionCodeSettings);
+        console.log('Email verification sent successfully to:', actionCodeSettings.url);
+      } catch (emailError) {
+        console.warn('Failed to send email verification:', emailError);
+        // Don't throw error here - account creation was successful
+      }
+      
     } catch (error: any) {
+      console.error('Signup error:', error);
       throw new Error(getErrorMessage(error.code));
     }
   };
@@ -246,8 +259,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const sendEmailVerificationToUser = async () => {
     try {
       if (auth.currentUser) {
+        // Use production URL if available, fallback to current origin
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
         const actionCodeSettings = {
-          url: `${window.location.origin}/auth/action`,
+          url: `${baseUrl}/auth/action`,
           handleCodeInApp: false
         };
         await sendEmailVerification(auth.currentUser, actionCodeSettings);
