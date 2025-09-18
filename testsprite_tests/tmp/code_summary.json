@@ -1,0 +1,124 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 15.5.2",
+    "React 19.1.0",
+    "Firebase Auth",
+    "Firestore",
+    "TailwindCSS",
+    "OpenRouter API",
+    "Node.js"
+  ],
+  "features": [
+    {
+      "name": "Authentication System",
+      "description": "Complete Firebase authentication with email/password, Google OAuth, email verification, password reset, and 2FA support",
+      "files": [
+        "contexts/AuthContext.tsx",
+        "lib/firebase.ts",
+        "app/components/LoginPage.tsx",
+        "app/components/SignupPage.tsx",
+        "app/components/TwoFactorVerification.tsx",
+        "app/components/EmailVerification.tsx",
+        "app/auth/action/page.tsx",
+        "app/verify/page.tsx",
+        "app/api/2fa/setup/route.ts",
+        "app/api/2fa/verify/route.ts",
+        "app/api/2fa/verify-login/route.ts",
+        "app/api/2fa/disable/route.ts",
+        "app/api/2fa/backup-codes/route.ts"
+      ]
+    },
+    {
+      "name": "Credit Management System",
+      "description": "Comprehensive credit system with 10 free credits for new users, 2 credits per paid model prompt, real-time tracking via Firestore with localStorage fallback",
+      "files": [
+        "contexts/AuthContext.tsx",
+        "app/components/CreditPurchase.tsx",
+        "app/api/chat/route.ts"
+      ]
+    },
+    {
+      "name": "AI Model Comparison",
+      "description": "Multi-model AI comparison interface supporting 13+ models (5 paid, 8+ free) with OpenRouter integration, response comparison, rating system, and best response selection",
+      "files": [
+        "app/components/ModelComparison.tsx",
+        "app/api/chat/route.ts"
+      ]
+    },
+    {
+      "name": "User Interface Components",
+      "description": "Modern glassmorphism UI with dark/light mode toggle, responsive design, modal system, toast notifications, and settings management",
+      "files": [
+        "app/components/ModelComparison.tsx",
+        "app/components/Modal.tsx",
+        "app/components/Toast.tsx",
+        "app/components/SettingsPage.tsx",
+        "app/components/AccountSettings.tsx",
+        "app/globals.css"
+      ]
+    },
+    {
+      "name": "API Endpoints",
+      "description": "RESTful API endpoints for chat functionality, 2FA operations, and user management with proper authentication and validation",
+      "files": [
+        "app/api/chat/route.ts",
+        "app/api/2fa/setup/route.ts",
+        "app/api/2fa/verify/route.ts",
+        "app/api/2fa/verify-login/route.ts",
+        "app/api/2fa/disable/route.ts",
+        "app/api/2fa/backup-codes/route.ts"
+      ]
+    },
+    {
+      "name": "Security Features",
+      "description": "Two-factor authentication with TOTP, backup codes, secure session management, and input validation",
+      "files": [
+        "app/components/TwoFactorVerification.tsx",
+        "app/components/AccountSettings.tsx",
+        "app/api/2fa/setup/route.ts",
+        "app/api/2fa/verify/route.ts",
+        "app/api/2fa/verify-login/route.ts",
+        "app/api/2fa/disable/route.ts",
+        "app/api/2fa/backup-codes/route.ts"
+      ]
+    },
+    {
+      "name": "Email Verification Flow",
+      "description": "Custom email verification system with beautiful success pages, animated UI elements, and automatic redirects",
+      "files": [
+        "app/auth/action/page.tsx",
+        "app/verify/page.tsx",
+        "app/components/EmailVerification.tsx",
+        "contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "name": "Payment Integration",
+      "description": "Credit purchase system with multiple pricing tiers, Stripe integration ready, and beautiful purchase interface",
+      "files": [
+        "app/components/CreditPurchase.tsx",
+        "contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "name": "Data Persistence",
+      "description": "Firestore integration for user data, credits, and settings with localStorage fallback for offline functionality",
+      "files": [
+        "lib/firebase.ts",
+        "contexts/AuthContext.tsx",
+        "app/api/chat/route.ts"
+      ]
+    },
+    {
+      "name": "Configuration Management",
+      "description": "Environment configuration, Next.js setup with Turbopack, TypeScript configuration, and security headers",
+      "files": [
+        "next.config.ts",
+        "tsconfig.json",
+        "package.json",
+        ".env.local"
+      ]
+    }
+  ]
+}

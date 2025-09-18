@@ -1,0 +1,634 @@
+[
+  {
+    "id": "TC001",
+    "title": "Email/Password Registration and Email Verification",
+    "description": "Verify that a new user can register using email and password, receive an email verification, and complete the verification process with success page and redirect.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the registration page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid email and password and submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that a verification email is sent to the user's email"
+      },
+      {
+        "type": "action",
+        "description": "Simulate user clicking on the verification link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the email verification success page with animation is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify automatic redirect after successful email verification"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Google OAuth Registration and Login",
+    "description": "Ensure that users can register and login through Google OAuth and are authenticated successfully.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Click on the Google OAuth login button"
+      },
+      {
+        "type": "action",
+        "description": "Authenticate through the Google OAuth popup flow"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that user is authenticated and redirected to the main application interface"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Password Reset Flow",
+    "description": "Test that users can request a password reset email, receive it, and reset their password successfully.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page and click on 'Forgot password?' link"
+      },
+      {
+        "type": "action",
+        "description": "Enter registered email and submit password reset request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that password reset email is sent to the user"
+      },
+      {
+        "type": "action",
+        "description": "Simulate clicking the password reset link and entering a new password"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm password change success and ability to login with new password"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Two-Factor Authentication Setup and Verification (TOTP and Backup Codes)",
+    "description": "Confirm users can enable 2FA with TOTP setup, receive backup codes, verify via 2FA during login, and disable 2FA safely.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the 2FA settings page and initiate 2FA setup"
+      },
+      {
+        "type": "action",
+        "description": "Scan QR code or enter TOTP secret in authenticator app"
+      },
+      {
+        "type": "action",
+        "description": "Input correct TOTP code to confirm setup"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify backup codes are generated and displayed"
+      },
+      {
+        "type": "action",
+        "description": "Logout and login again, entering the correct TOTP code at 2FA challenge"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm successful login after 2FA verification"
+      },
+      {
+        "type": "action",
+        "description": "Use a valid backup code for 2FA verification on subsequent login"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm backup code is consumed and login succeeds"
+      },
+      {
+        "type": "action",
+        "description": "Disable 2FA from account settings"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that subsequent logins do not require 2FA"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Credit Initialization for New Users",
+    "description": "Validate new user accounts receive 10 free credits initially and that the credit balance displays correctly after login.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Register a new user account"
+      },
+      {
+        "type": "action",
+        "description": "Confirm email verification if required and login"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the user account is credited with exactly 10 free credits"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate real-time credit balance display in the UI"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Credit Deduction on Paid AI Model Usage",
+    "description": "Test that using paid AI models deducts 2 credits per prompt sent and prevents usage when insufficient credits exist.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with a user account having at least 4 credits"
+      },
+      {
+        "type": "action",
+        "description": "Select one or more paid AI models to send a prompt"
+      },
+      {
+        "type": "action",
+        "description": "Send prompt and wait for AI responses"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that 2 credits per paid model prompt are deducted from user balance in real-time"
+      },
+      {
+        "type": "action",
+        "description": "Use up credits to below 2 credits"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to send a prompt to a paid model"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system prevents prompt submission and prompts user to purchase credits"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Credit Purchase Workflow with Stripe Integration",
+    "description": "Verify that users can purchase credit bundles via Stripe, complete payment successfully, and see updated credit balance immediately.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with a valid user account"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the credit purchase page"
+      },
+      {
+        "type": "action",
+        "description": "Select different credit purchase tiers and initiate a payment"
+      },
+      {
+        "type": "action",
+        "description": "Complete the payment procedure with Stripe test credentials"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the user's credit balance updates immediately after payment confirmation"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "AI Model Comparison with Multiple Models and Response Rating",
+    "description": "Ensure users can select multiple AI models (free and paid), send prompts simultaneously, compare responses side-by-side, rate responses, and select the best response.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and access the AI model comparison interface"
+      },
+      {
+        "type": "action",
+        "description": "Select a mix of free and paid models (total at least 3)"
+      },
+      {
+        "type": "action",
+        "description": "Enter a prompt and submit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify API requests are sent correctly for all selected models"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that responses from all models are displayed side-by-side"
+      },
+      {
+        "type": "action",
+        "description": "Rate each model's response individually"
+      },
+      {
+        "type": "action",
+        "description": "Select the best response from the received results"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure that user ratings and best selection are saved correctly"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "UI Dark Mode and Responsive Layouts",
+    "description": "Check that UI components render correctly in both dark and light themes and adapt responsively across devices (desktop, tablet, mobile).",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Toggle the theme between light and dark modes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that all UI components, including glassmorphism effects, modals, and toast notifications, correctly adjust appearance"
+      },
+      {
+        "type": "action",
+        "description": "Resize the browser window to simulate tablet and mobile devices"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that layouts and navigation adapt responsively without visual or functional breakage"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Modal and Toast Notification Functionality",
+    "description": "Ensure modals open and close correctly with expected content, and toast notifications appear properly for system messages such as errors and success events.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger modal opening via UI interactions (e.g., settings, credit purchase)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that modal content is correct and modal closes on user command"
+      },
+      {
+        "type": "action",
+        "description": "Perform actions that generate toast notifications (e.g., successful credit purchase, error on invalid input)"
+      },
+      {
+        "type": "assertion",
+        "description": "Check toast notifications show appropriate messages and disappear after the standard timeout"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Backend API Request Validation and Error Handling",
+    "description": "Validate backend endpoints for chat, 2FA, and user management reject invalid requests with proper error codes and messages and accept valid requests successfully.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send chat prompt requests without authentication"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm 401 Unauthorized error response"
+      },
+      {
+        "type": "action",
+        "description": "Send 2FA verification requests with invalid or expired tokens"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm appropriate 400 Bad Request or 401 Unauthorized error response"
+      },
+      {
+        "type": "action",
+        "description": "Send chat requests with malformed prompt data or unsupported AI model identifiers"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify 400 Bad Request responses with descriptive error messages"
+      },
+      {
+        "type": "action",
+        "description": "Send valid authenticated requests with correct data"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify successful 200 OK responses with expected payloads"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Security: Input Sanitization and XSS Protection",
+    "description": "Test that user inputs in prompts, settings, and any form fields are properly sanitized and do not allow injection of scripts or malicious content.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input scripts or HTML tags in AI prompt and user settings fields"
+      },
+      {
+        "type": "action",
+        "description": "Send data to backend APIs"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that scripts and tags are escaped or stripped and do not execute on the UI"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Session Management and Secure Authentication",
+    "description": "Verify that session cookies are secure, persistent on login, expire on logout, and that 2FA enforcement maintains session integrity.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials and 2FA enabled"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify secure session cookie is set with httpOnly and secure flags"
+      },
+      {
+        "type": "action",
+        "description": "Reload the application and confirm session persists without additional login"
+      },
+      {
+        "type": "action",
+        "description": "Logout from the application"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm session cookies cleared and user is redirected to login"
+      },
+      {
+        "type": "action",
+        "description": "Attempt access to protected routes without authentication"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm redirect to login page"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Email Verification UI Edge Cases",
+    "description": "Test email verification page behavior when token is expired, invalid, or reused and ensure appropriate error messages and UI feedback.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to email verification page with an expired token"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message about expired token and option to resend verification email"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to email verification page with an invalid token"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message about invalid token"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to email verification page with token that has been already used"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm showing message that email is already verified and redirect"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Data Persistence with Firestore and localStorage Fallback",
+    "description": "Validate that user data, credit balances, and settings persist correctly in Firestore and when Firestore is unavailable, the system falls back to localStorage and synchronizes once online.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and modify user settings and credit balances"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm updates persist to Firestore"
+      },
+      {
+        "type": "action",
+        "description": "Simulate Firestore unavailability (offline mode)"
+      },
+      {
+        "type": "action",
+        "description": "Make changes in the app like deducting credits and updating settings"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved to localStorage as fallback"
+      },
+      {
+        "type": "action",
+        "description": "Restore Firestore availability"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify localStorage changes synchronize back to Firestore and state is consistent"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "API Key and Secure Backend Access",
+    "description": "Ensure backend API requests require proper authentication and API keys are managed securely without exposure in the client or logs.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send API requests with no API key or invalid keys"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm denial with 401 Unauthorized status"
+      },
+      {
+        "type": "action",
+        "description": "Review client code and network calls for any leakage of API keys"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify API keys are not exposed in client code or logs"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Handling Insufficient Credits for Paid Model Prompts",
+    "description": "Check system behavior when user tries to send prompts to paid models without enough credits, ensuring prompt is blocked and user is prompted to purchase credits.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with a user having 0 or 1 credit(s)"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to send prompt to a paid AI model"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm prompt submission is blocked"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that user is shown a notification or modal to purchase credits"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "AI Model Selection UI Limits and Validation",
+    "description": "Ensure users cannot select unsupported AI models or exceed max allowed models for simultaneous comparison, with proper UI feedback.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to select more than 13 models simultaneously"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI prevents selection with an error or disables excess options"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to select an invalid or unsupported model identifier"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm model is not selectable and UI shows appropriate message"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Backup Codes Usage and Management",
+    "description": "Verify that backup codes for 2FA can be viewed, used once, and regenerated following security best practices.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enable 2FA and view provided backup codes"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm backup codes display in UI securely"
+      },
+      {
+        "type": "action",
+        "description": "Use one backup code to bypass 2FA during login"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify backup code is invalidated after use"
+      },
+      {
+        "type": "action",
+        "description": "Request regeneration of backup codes"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm old backup codes become invalid and new codes are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Automatic Redirects and UI Animations on Key Actions",
+    "description": "Test that UI animations and automatic redirects after email verification, credit purchase, and 2FA setup enhance user experience without errors.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Complete email verification flow"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify presence of success animations and automatic redirect occurs"
+      },
+      {
+        "type": "action",
+        "description": "Complete a credit purchase"
+      },
+      {
+        "type": "assertion",
+        "description": "Check for purchase interface animations and update redirect or notification"
+      },
+      {
+        "type": "action",
+        "description": "Set up 2FA successfully"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm animated UI feedback and smooth transition to backup codes display"
+      }
+    ]
+  }
+]
