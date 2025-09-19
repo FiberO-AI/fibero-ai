@@ -41,8 +41,9 @@ export default function RootLayout({
           onLoad={() => {
             console.log('✅ AdSense script loaded successfully');
             if (typeof window !== 'undefined') {
-              (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-              console.log('🎯 AdSense array initialized:', (window as any).adsbygoogle);
+              const w = window as Window & { adsbygoogle?: Array<Record<string, unknown>> };
+              w.adsbygoogle = w.adsbygoogle || [];
+              console.log('🎯 AdSense array initialized:', w.adsbygoogle);
             }
           }}
           onError={(e) => {

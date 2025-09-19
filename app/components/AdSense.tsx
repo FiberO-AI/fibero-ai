@@ -12,7 +12,7 @@ interface AdSenseProps {
 
 declare global {
   interface Window {
-    adsbygoogle: unknown[];
+    adsbygoogle: Array<Record<string, unknown>>;
   }
 }
 
@@ -33,7 +33,7 @@ export default function AdSense({
         const timer = setTimeout(() => {
           try {
             console.log('🎯 Pushing AdSense ad unit:', adSlot);
-            (window.adsbygoogle as any[]).push({});
+            window.adsbygoogle.push({});
           } catch (pushError) {
             console.error('❌ AdSense push error:', pushError);
           }
