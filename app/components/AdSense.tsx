@@ -29,15 +29,28 @@ export default function AdSense({
         // Initialize adsbygoogle array if it doesn't exist
         window.adsbygoogle = window.adsbygoogle || [];
         
-        // Wait a bit for the AdSense script to load
+        // Wait for the element to be rendered and have dimensions
         const timer = setTimeout(() => {
           try {
-            console.log('🎯 Pushing AdSense ad unit:', adSlot);
-            window.adsbygoogle.push({});
+            const adElement = document.querySelector(`[data-ad-slot="${adSlot}"]`);
+            if (adElement && adElement.clientWidth > 0) {
+              console.log('🎯 Pushing AdSense ad unit:', adSlot, 'Width:', adElement.clientWidth);
+              window.adsbygoogle.push({});
+            } else {
+              console.log('⏳ AdSense element not ready, retrying...', adSlot);
+              // Retry after a longer delay
+              setTimeout(() => {
+                try {
+                  window.adsbygoogle.push({});
+                } catch (retryError) {
+                  console.error('❌ AdSense retry error:', retryError);
+                }
+              }, 500);
+            }
           } catch (pushError) {
             console.error('❌ AdSense push error:', pushError);
           }
-        }, 100);
+        }, 200);
         
         return () => clearTimeout(timer);
       }
@@ -47,13 +60,15 @@ export default function AdSense({
   }, [adSlot]);
 
   return (
-    <ins
-      className={`adsbygoogle ${className}`}
-      style={style}
-      data-ad-client="ca-pub-9108406017017093"
-      data-ad-slot={adSlot}
-      data-ad-format={adFormat}
-      data-full-width-responsive={fullWidthResponsive.toString()}
-    />
+    <div style={{ minWidth: '300px', minHeight: '250px', ...style }}>
+      <ins
+        className={`adsbygoogle ${className}`}
+        style={{ display: 'block', width: '100%', height: '100%' }}
+        data-ad-client="ca-pub-9108406017017093"
+        data-ad-slot={adSlot}
+        data-ad-format={adFormat}
+        data-full-width-responsive={fullWidthResponsive.toString()}
+      />
+    </div>
   );
 }
