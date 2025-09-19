@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { adminAuth, adminDb } from '../../../lib/firebase-optimized';
+import { adminAuth, adminDb } from '../../../lib/firebase-admin';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {

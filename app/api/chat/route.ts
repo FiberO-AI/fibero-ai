@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 // import { adminAuth, adminDb } from '../../../lib/firebase-optimized';
 // import { chatRateLimiter } from '../../../lib/rate-limiter';
 
@@ -193,17 +195,18 @@ async function deductUserCredits(userId: string, amount: number): Promise<boolea
     
     // Fallback: Use a simple in-memory credit system for development
     // In production, you'd want to use a more robust fallback like Redis
-    if (!global.userCredits) {
-      global.userCredits = {};
+    const globalAny = global as any;
+    if (!globalAny.userCredits) {
+      globalAny.userCredits = {};
     }
     
     // Initialize new user with 10 credits if not exists
-    if (!global.userCredits[userId]) {
+    if (!globalAny.userCredits[userId]) {
       console.log('Initializing fallback credits for new user');
-      global.userCredits[userId] = 10;
+      globalAny.userCredits[userId] = 10;
     }
     
-    const currentCredits = global.userCredits[userId];
+    const currentCredits = globalAny.userCredits[userId];
     console.log('Fallback - Current credits for user:', currentCredits);
     
     if (currentCredits < amount) {
@@ -211,8 +214,8 @@ async function deductUserCredits(userId: string, amount: number): Promise<boolea
       return false;
     }
     
-    global.userCredits[userId] -= amount;
-    console.log('Fallback - Credits deducted. New balance:', global.userCredits[userId]);
+    globalAny.userCredits[userId] -= amount;
+    console.log('Fallback - Credits deducted. New balance:', globalAny.userCredits[userId]);
     return true;
   }
 }
