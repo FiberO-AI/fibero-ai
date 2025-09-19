@@ -25,13 +25,26 @@ export default function AdSense({
 }: AdSenseProps) {
   useEffect(() => {
     try {
-      if (typeof window !== 'undefined' && window.adsbygoogle) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      if (typeof window !== 'undefined') {
+        // Initialize adsbygoogle array if it doesn't exist
+        window.adsbygoogle = window.adsbygoogle || [];
+        
+        // Wait a bit for the AdSense script to load
+        const timer = setTimeout(() => {
+          try {
+            console.log('🎯 Pushing AdSense ad unit:', adSlot);
+            (window.adsbygoogle as any[]).push({});
+          } catch (pushError) {
+            console.error('❌ AdSense push error:', pushError);
+          }
+        }, 100);
+        
+        return () => clearTimeout(timer);
       }
     } catch (error) {
-      console.error('AdSense error:', error);
+      console.error('❌ AdSense initialization error:', error);
     }
-  }, []);
+  }, [adSlot]);
 
   return (
     <ins

@@ -38,6 +38,16 @@ export default function RootLayout({
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9108406017017093"
           crossOrigin="anonymous"
           strategy="afterInteractive"
+          onLoad={() => {
+            console.log('✅ AdSense script loaded successfully');
+            if (typeof window !== 'undefined') {
+              (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+              console.log('🎯 AdSense array initialized:', (window as any).adsbygoogle);
+            }
+          }}
+          onError={(e) => {
+            console.error('❌ AdSense script failed to load:', e);
+          }}
         />
       </head>
       <body
