@@ -3,9 +3,9 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Singleton pattern to prevent multiple initializations
-let adminApp: any = null;
-let adminAuthInstance: any = null;
-let adminDbInstance: any = null;
+let adminApp: ReturnType<typeof initializeApp> | null = null;
+let adminAuthInstance: ReturnType<typeof getAuth> | null = null;
+let adminDbInstance: ReturnType<typeof getFirestore> | null = null;
 
 // Initialize Firebase Admin SDK with singleton pattern
 function initializeFirebaseAdmin() {

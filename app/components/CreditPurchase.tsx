@@ -72,8 +72,8 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       };
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseInfo));
       
-      // Get current domain for redirect URLs
-      const currentDomain = window.location.origin;
+      // Store current domain for future use if needed
+      // const currentDomain = window.location.origin;
       
       // Map package IDs to their specific Stripe checkout URLs
       const stripeCheckoutUrls: Record<string, string> = {

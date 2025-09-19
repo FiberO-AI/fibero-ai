@@ -260,7 +260,7 @@ function ModelComparisonContent() {
   const [activeNavItem, setActiveNavItem] = useState('home');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
-  const [pendingPurchaseNotice, setPendingPurchaseNotice] = useState(false);
+  // const [pendingPurchaseNotice, setPendingPurchaseNotice] = useState(false);
   const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
 
   // Prompt templates
@@ -382,7 +382,7 @@ function ModelComparisonContent() {
         const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
         if (purchaseData.timestamp > tenMinutesAgo && !purchaseData.processed) {
           // Show notice and auto-redirect to success page for recent purchases
-          setPendingPurchaseNotice(true);
+          // setPendingPurchaseNotice(true);
           console.log('🚀 Auto-redirecting to process recent purchase...');
           setTimeout(() => {
             window.location.href = '/success';
