@@ -15,6 +15,7 @@ interface CreditPackage {
   price: number;
   popular?: boolean;
   bonus?: number;
+  priceId: string;
 }
 
 export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps) {
@@ -26,26 +27,30 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
     {
       id: 'starter',
       credits: 100,
-      price: 10,
+      price: 5,
+      priceId: 'price_1S8xoNF1dDWHy4q9oxa1uWmJ'
     },
     {
       id: 'popular',
-      credits: 250,
-      price: 10,
+      credits: 500,
+      price: 20,
       popular: true,
-      bonus: 50
+      bonus: 50,
+      priceId: 'price_1S8xoNF1dDWHy4q9DcljxJWf'
     },
     {
       id: 'pro',
-      credits: 500,
-      price: 10,
-      bonus: 100
+      credits: 1000,
+      price: 35,
+      bonus: 150,
+      priceId: 'price_1S8xoNF1dDWHy4q9x0szbbsx'
     },
     {
       id: 'enterprise',
-      credits: 1000,
-      price: 10,
-      bonus: 200
+      credits: 2500,
+      price: 75,
+      bonus: 500,
+      priceId: 'price_1S8xoNF1dDWHy4q9AwNS1wvb'
     }
   ];
 
@@ -70,8 +75,11 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       // Get current domain for redirect URLs
       const currentDomain = window.location.origin;
       
-      // Redirect to Stripe Checkout with success/cancel URLs
-      const stripeUrl = `https://buy.stripe.com/6oUaEX7PP7vY47P5V70kE00?client_reference_id=${user.uid}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${encodeURIComponent(currentDomain + '/success')}&cancel_url=${encodeURIComponent(currentDomain + '/cancel')}`;
+      // Create client reference with package info for webhook processing
+      const clientReference = `${user.uid}|${packageId}|${selectedPkg.priceId}`;
+      
+      // Redirect to Stripe Checkout with package info in client reference
+      const stripeUrl = `https://buy.stripe.com/6oUaEX7PP7vY47P5V70kE00?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${encodeURIComponent(currentDomain + '/success')}&cancel_url=${encodeURIComponent(currentDomain + '/cancel')}`;
       
       // Open Stripe checkout in same window
       window.location.href = stripeUrl;
