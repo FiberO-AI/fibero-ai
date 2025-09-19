@@ -30,6 +30,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   sendEmailVerification: () => Promise<void>;
   checkEmailVerified: () => Promise<boolean>;
+  checkEmailVerifiedWithCredentials: (email: string, password: string) => Promise<boolean>;
   updateProfile: (data: { displayName?: string }) => Promise<void>;
   deductCredits: (amount: number) => Promise<boolean>;
   addCredits: (amount: number) => Promise<void>;
@@ -148,8 +149,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // FIRST: Check if email is verified
       if (!user.emailVerified) {
-        // Store email for verification page
+        // Store email and password for verification page
         localStorage.setItem('pendingVerificationEmail', user.email || '');
+        localStorage.setItem('tempPassword', password);
         
         // Try to resend verification email automatically
         try {
@@ -263,8 +265,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('📧 Check your email inbox (including spam folder)');
         console.log('🔗 Verification link should redirect to:', actionCodeSettings.url);
         
-        // Store email in localStorage for debugging
+        // Store email and password temporarily for verification checking
         localStorage.setItem('pendingVerificationEmail', user.email || '');
+        localStorage.setItem('tempPassword', password); // Store temporarily for verification
         
       } catch (emailError: any) {
         console.error('❌ Failed to send email verification:', emailError);
@@ -359,12 +362,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const isVerified = auth.currentUser.emailVerified;
         console.log('📧 Current verification status:', isVerified);
         return isVerified;
+      } else {
+        console.log('❌ No current user found');
+        return false;
       }
-      console.log('❌ No current user found');
-      return false;
     } catch (error: any) {
       console.error('❌ Error checking verification status:', error);
       throw new Error('Failed to check verification status');
+    }
+  };
+
+  const checkEmailVerifiedWithCredentials = async (email: string, password: string): Promise<boolean> => {
+    try {
+      console.log('🔍 Attempting to sign in to check verification status...');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      console.log('📧 User signed in, checking verification:', user.emailVerified);
+      
+      if (user.emailVerified) {
+        console.log('✅ Email is verified! User can stay logged in.');
+        return true;
+      } else {
+        console.log('❌ Email not verified yet, signing out...');
+        await signOut(auth);
+        return false;
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to check verification with credentials:', error);
+      return false;
     }
   };
 
@@ -555,6 +581,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     resetPassword,
     sendEmailVerification: sendEmailVerificationToUser,
     checkEmailVerified,
+    checkEmailVerifiedWithCredentials,
     updateProfile: updateUserProfile,
     deductCredits,
     addCredits,

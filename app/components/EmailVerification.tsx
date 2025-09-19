@@ -11,7 +11,7 @@ interface EmailVerificationProps {
 }
 
 export default function EmailVerification({ darkMode, onBack, userEmail }: EmailVerificationProps) {
-  const { user, sendEmailVerification, checkEmailVerified } = useAuth();
+  const { user, sendEmailVerification, checkEmailVerified, checkEmailVerifiedWithCredentials } = useAuth();
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
   const [isChecking, setIsChecking] = useState(false);
@@ -35,24 +35,29 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
     }
   }, [countdown]);
 
-  // Auto-check verification status every 2 seconds (more frequent)
+  // Auto-check verification status with stored credentials
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (checkEmailVerified) {
+      const storedEmail = displayEmail || localStorage.getItem('pendingVerificationEmail');
+      const storedPassword = localStorage.getItem('tempPassword');
+      
+      if (storedEmail && storedPassword && checkEmailVerifiedWithCredentials) {
         try {
-          const isVerified = await checkEmailVerified();
+          console.log('🔍 Auto-checking verification with stored credentials...');
+          const isVerified = await checkEmailVerifiedWithCredentials(storedEmail, storedPassword);
           if (isVerified) {
             console.log('✅ Email verified! Redirecting to home...');
-            onBack(); // Redirect to home when verified
+            localStorage.removeItem('tempPassword'); // Clean up
+            onBack();
           }
         } catch (error) {
-          console.log('Checking verification status...', error);
+          console.log('Auto-check failed:', error);
         }
       }
-    }, 2000); // Check every 2 seconds instead of 5
+    }, 3000); // Check every 3 seconds
 
     return () => clearInterval(interval);
-  }, [checkEmailVerified, onBack]);
+  }, [displayEmail, checkEmailVerifiedWithCredentials, onBack]);
 
   // Also check when user returns to the tab/window
   useEffect(() => {
@@ -95,29 +100,48 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
   };
 
   const handleCheckVerification = async () => {
-    if (!checkEmailVerified) return;
-    
     setIsChecking(true);
+    setResendMessage('');
     
     try {
       console.log('🔍 Manually checking email verification status...');
-      const isVerified = await checkEmailVerified();
-      console.log('📧 Verification status:', isVerified);
       
-      if (isVerified) {
-        console.log('✅ Email verified! Redirecting to home...');
-        onBack(); // Redirect to home when verified
-      } else {
-        setResendMessage('Email not verified yet. Please check your inbox and click the verification link.');
-        // Clear message after 5 seconds
-        setTimeout(() => setResendMessage(''), 5000);
+      // First try with current user
+      if (user) {
+        const isVerified = await checkEmailVerified();
+        console.log('📧 Current user verification status:', isVerified);
+        
+        if (isVerified) {
+          console.log('✅ Email verified! Redirecting to home...');
+          onBack();
+          return;
+        }
       }
+      
+      // If no current user or not verified, try with stored credentials
+      const storedEmail = displayEmail || localStorage.getItem('pendingVerificationEmail');
+      const storedPassword = localStorage.getItem('tempPassword'); // We'll need to store this during signup
+      
+      if (storedEmail && storedPassword) {
+        console.log('🔍 Trying to check verification with stored credentials...');
+        const isVerified = await checkEmailVerifiedWithCredentials(storedEmail, storedPassword);
+        
+        if (isVerified) {
+          console.log('✅ Email verified with credentials! Redirecting to home...');
+          // Clear stored password for security
+          localStorage.removeItem('tempPassword');
+          onBack();
+          return;
+        }
+      }
+      
+      // If we get here, email is not verified
+      setResendMessage('Email not verified yet. Please check your inbox and click the verification link.');
+      
     } catch (error: unknown) {
       console.error('❌ Failed to check verification:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to check verification status.';
       setResendMessage(errorMessage);
-      // Clear message after 5 seconds
-      setTimeout(() => setResendMessage(''), 5000);
     } finally {
       setIsChecking(false);
     }
