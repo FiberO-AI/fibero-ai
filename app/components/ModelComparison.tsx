@@ -356,7 +356,7 @@ function ModelComparisonContent() {
     setHoveredTooltip(null);
   }, [activeNavItem]);
 
-  // Check for successful payment return
+  // Check for successful payment return and pending purchases
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
@@ -368,6 +368,17 @@ function ModelComparisonContent() {
     } else if (cancelled === 'true') {
       // Redirect to cancel page
       window.location.href = '/cancel';
+    }
+    
+    // Check for pending purchase on page load
+    const pendingPurchase = localStorage.getItem('pendingPurchase');
+    if (pendingPurchase) {
+      console.log('🔍 Found pending purchase on main page:', pendingPurchase);
+      // Show a notification or button to process the purchase
+      const shouldProcess = confirm('We found a pending purchase. Would you like to process it now?');
+      if (shouldProcess) {
+        window.location.href = '/success';
+      }
     }
   }, []);
 

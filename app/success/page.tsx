@@ -14,25 +14,43 @@ export default function PaymentSuccess() {
   useEffect(() => {
     const processPurchase = async () => {
       try {
+        console.log('🎯 Processing purchase on success page...');
+        
         // Get pending purchase info from localStorage
         const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
+        console.log('📦 Pending purchase data:', pendingPurchaseStr);
+        
         if (!pendingPurchaseStr) {
-          setError('No pending purchase found');
+          console.error('❌ No pending purchase found in localStorage');
+          setError('No pending purchase found. Please try purchasing again.');
           setProcessing(false);
           return;
         }
 
         const pendingPurchase = JSON.parse(pendingPurchaseStr);
+        console.log('📋 Parsed purchase:', pendingPurchase);
         
         // Verify user matches
-        if (!user || user.uid !== pendingPurchase.userId) {
+        if (!user) {
+          console.error('❌ No user found');
+          setError('User not authenticated. Please log in and try again.');
+          setProcessing(false);
+          return;
+        }
+        
+        if (user.uid !== pendingPurchase.userId) {
+          console.error('❌ User ID mismatch:', user.uid, 'vs', pendingPurchase.userId);
           setError('User verification failed');
           setProcessing(false);
           return;
         }
 
+        console.log('💎 Adding credits:', pendingPurchase.credits);
+        
         // Add credits to user account
         await addCredits(pendingPurchase.credits);
+        
+        console.log('✅ Credits added successfully');
         
         // Clear pending purchase
         localStorage.removeItem('pendingPurchase');
@@ -46,14 +64,30 @@ export default function PaymentSuccess() {
         }, 3000);
 
       } catch (err) {
-        console.error('Error processing purchase:', err);
+        console.error('❌ Error processing purchase:', err);
         setError('Failed to process purchase. Please contact support.');
         setProcessing(false);
       }
     };
 
+    // Add a small delay to ensure user is loaded
     if (user) {
+      console.log('👤 User found, processing purchase...');
       processPurchase();
+    } else {
+      console.log('⏳ Waiting for user authentication...');
+      // Wait a bit for user to load, then try again
+      const timer = setTimeout(() => {
+        if (user) {
+          processPurchase();
+        } else {
+          console.error('❌ User still not loaded after timeout');
+          setError('Authentication timeout. Please refresh the page.');
+          setProcessing(false);
+        }
+      }, 2000);
+      
+      return () => clearTimeout(timer);
     }
   }, [user, addCredits, router]);
 
