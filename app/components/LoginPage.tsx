@@ -9,9 +9,10 @@ interface LoginPageProps {
   darkMode: boolean;
   onBack: () => void;
   onNavigateToSignup: () => void;
+  onNavigateToVerification?: (email: string) => void;
 }
 
-export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: LoginPageProps) {
+export default function LoginPage({ darkMode, onBack, onNavigateToSignup, onNavigateToVerification }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -38,7 +39,15 @@ export default function LoginPage({ darkMode, onBack, onNavigateToSignup }: Logi
     try {
       const result = await login(email, password);
       
-      if (result.requiresTwoFactor && result.userId) {
+      if (result.requiresEmailVerification) {
+        // Redirect to email verification page
+        if (onNavigateToVerification) {
+          onNavigateToVerification(email);
+        } else {
+          setError('Please verify your email address. A new verification email has been sent.');
+        }
+        setIsLoading(false);
+      } else if (result.requiresTwoFactor && result.userId) {
         // Show 2FA verification page
         setPendingUserId(result.userId);
         setShowTwoFactor(true);

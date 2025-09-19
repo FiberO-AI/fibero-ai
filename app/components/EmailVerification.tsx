@@ -17,6 +17,13 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
   const [isChecking, setIsChecking] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [displayEmail, setDisplayEmail] = useState('');
+
+  // Get email from props or localStorage
+  useEffect(() => {
+    const emailToShow = userEmail || localStorage.getItem('pendingVerificationEmail') || '';
+    setDisplayEmail(emailToShow);
+  }, [userEmail]);
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -47,6 +54,9 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
     
     setIsResending(true);
     setResendMessage('');
+    
+    // Get the email from localStorage if not provided
+    const emailToUse = userEmail || localStorage.getItem('pendingVerificationEmail') || 'your email';
     
     try {
       await sendEmailVerification();
@@ -115,7 +125,7 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
             "text-sm font-medium mt-1",
             darkMode ? "text-blue-400" : "text-blue-600"
           )}>
-            {userEmail || user?.email}
+            {displayEmail || user?.email || 'your email'}
           </p>
         </div>
 

@@ -1085,6 +1085,11 @@ function ModelComparisonContent() {
       darkMode={darkMode} 
       onBack={() => setActiveNavItem('home')} 
       onNavigateToSignup={() => setActiveNavItem('signup')}
+      onNavigateToVerification={(email) => {
+        setActiveNavItem('verification');
+        // Store email for verification page
+        localStorage.setItem('pendingVerificationEmail', email);
+      }}
     />;
   }
   

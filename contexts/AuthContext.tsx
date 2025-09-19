@@ -148,9 +148,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // FIRST: Check if email is verified
       if (!user.emailVerified) {
+        // Store email for verification page
+        localStorage.setItem('pendingVerificationEmail', user.email || '');
+        
+        // Try to resend verification email automatically
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+          const actionCodeSettings = {
+            url: `${baseUrl}/auth/action`,
+            handleCodeInApp: false
+          };
+          await sendEmailVerification(user, actionCodeSettings);
+          console.log('✅ Verification email resent automatically');
+        } catch (emailError) {
+          console.warn('Failed to resend verification email:', emailError);
+        }
+        
         // Sign out the user immediately
         await signOut(auth);
-        throw new Error('Please verify your email address before logging in. Check your inbox for a verification link.');
+        
+        // Return special flag to indicate email verification is needed
+        return { requiresTwoFactor: false, requiresEmailVerification: true };
       }
       
       // Check if user has 2FA enabled
@@ -231,11 +249,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           url: `${baseUrl}/auth/action`,
           handleCodeInApp: false
         };
+        
+        console.log('Attempting to send verification email to:', user.email);
+        console.log('Action URL:', actionCodeSettings.url);
+        console.log('User UID:', user.uid);
+        
         await sendEmailVerification(user, actionCodeSettings);
-        console.log('Email verification sent successfully to:', actionCodeSettings.url);
-      } catch (emailError) {
-        console.warn('Failed to send email verification:', emailError);
-        // Don't throw error here - account creation was successful
+        console.log('✅ Email verification sent successfully!');
+        
+        // Store email in localStorage for debugging
+        localStorage.setItem('pendingVerificationEmail', user.email || '');
+        
+      } catch (emailError: any) {
+        console.error('❌ Failed to send email verification:', emailError);
+        console.error('Error code:', emailError.code);
+        console.error('Error message:', emailError.message);
+        
+        // Try sending without custom action settings as fallback
+        try {
+          console.log('Trying fallback email verification...');
+          await sendEmailVerification(user);
+          console.log('✅ Fallback email verification sent!');
+        } catch (fallbackError) {
+          console.error('❌ Fallback email verification also failed:', fallbackError);
+        }
       }
       
       // IMPORTANT: Sign out the user immediately after account creation
