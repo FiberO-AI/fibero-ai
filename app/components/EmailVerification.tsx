@@ -55,9 +55,6 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
     setIsResending(true);
     setResendMessage('');
     
-    // Get the email from localStorage if not provided
-    const emailToUse = userEmail || localStorage.getItem('pendingVerificationEmail') || 'your email';
-    
     try {
       await sendEmailVerification();
       setResendMessage('Verification email sent successfully!');

@@ -22,7 +22,7 @@ interface AuthContextType {
   loading: boolean;
   credits: number;
   creditsLoading: boolean;
-  login: (email: string, password: string) => Promise<{ requiresTwoFactor: boolean; userId?: string }>;
+  login: (email: string, password: string) => Promise<{ requiresTwoFactor: boolean; userId?: string; requiresEmailVerification?: boolean }>;
   verifyTwoFactor: (userId: string, code: string) => Promise<void>;
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => Promise<void>;
