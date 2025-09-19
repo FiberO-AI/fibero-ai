@@ -356,6 +356,21 @@ function ModelComparisonContent() {
     setHoveredTooltip(null);
   }, [activeNavItem]);
 
+  // Check for successful payment return
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const cancelled = urlParams.get('cancelled');
+    
+    if (success === 'true') {
+      // Redirect to success page
+      window.location.href = '/success';
+    } else if (cancelled === 'true') {
+      // Redirect to cancel page
+      window.location.href = '/cancel';
+    }
+  }, []);
+
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);

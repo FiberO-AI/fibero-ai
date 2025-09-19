@@ -26,26 +26,26 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
     {
       id: 'starter',
       credits: 100,
-      price: 5,
+      price: 10,
     },
     {
       id: 'popular',
-      credits: 500,
-      price: 20,
+      credits: 250,
+      price: 10,
       popular: true,
       bonus: 50
     },
     {
       id: 'pro',
-      credits: 1000,
-      price: 35,
-      bonus: 150
+      credits: 500,
+      price: 10,
+      bonus: 100
     },
     {
       id: 'enterprise',
-      credits: 2500,
-      price: 75,
-      bonus: 500
+      credits: 1000,
+      price: 10,
+      bonus: 200
     }
   ];
 
@@ -57,19 +57,28 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
     setSelectedPackage(packageId);
 
     try {
-      // Simulate payment processing (replace with actual Stripe integration)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Store purchase info in localStorage for return handling
+      const purchaseInfo = {
+        userId: user.uid,
+        packageId: packageId,
+        credits: selectedPkg.credits + (selectedPkg.bonus || 0),
+        price: selectedPkg.price,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('pendingPurchase', JSON.stringify(purchaseInfo));
       
-      // Add credits to user account
-      const totalCredits = selectedPkg.credits + (selectedPkg.bonus || 0);
-      await addCredits(totalCredits);
+      // Get current domain for redirect URLs
+      const currentDomain = window.location.origin;
       
-      alert(`Successfully purchased ${totalCredits} credits!`);
-      onBack();
+      // Redirect to Stripe Checkout with success/cancel URLs
+      const stripeUrl = `https://buy.stripe.com/6oUaEX7PP7vY47P5V70kE00?client_reference_id=${user.uid}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${encodeURIComponent(currentDomain + '/success')}&cancel_url=${encodeURIComponent(currentDomain + '/cancel')}`;
+      
+      // Open Stripe checkout in same window
+      window.location.href = stripeUrl;
+      
     } catch (error) {
-      console.error('Payment failed:', error);
-      alert('Payment failed. Please try again.');
-    } finally {
+      console.error('Payment redirect failed:', error);
+      alert('Failed to redirect to payment. Please try again.');
       setIsProcessing(false);
       setSelectedPackage('');
     }
