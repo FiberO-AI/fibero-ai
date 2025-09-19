@@ -35,18 +35,44 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
     }
   }, [countdown]);
 
-  // Auto-check verification status every 5 seconds
+  // Auto-check verification status every 2 seconds (more frequent)
   useEffect(() => {
     const interval = setInterval(async () => {
       if (checkEmailVerified) {
-        const isVerified = await checkEmailVerified();
-        if (isVerified) {
-          onBack(); // Redirect to home when verified
+        try {
+          const isVerified = await checkEmailVerified();
+          if (isVerified) {
+            console.log('✅ Email verified! Redirecting to home...');
+            onBack(); // Redirect to home when verified
+          }
+        } catch (error) {
+          console.log('Checking verification status...', error);
         }
       }
-    }, 5000);
+    }, 2000); // Check every 2 seconds instead of 5
 
     return () => clearInterval(interval);
+  }, [checkEmailVerified, onBack]);
+
+  // Also check when user returns to the tab/window
+  useEffect(() => {
+    const handleFocus = async () => {
+      console.log('🔍 Window focused - checking verification status...');
+      if (checkEmailVerified) {
+        try {
+          const isVerified = await checkEmailVerified();
+          if (isVerified) {
+            console.log('✅ Email verified on focus! Redirecting to home...');
+            onBack();
+          }
+        } catch (error) {
+          console.log('Focus check failed:', error);
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [checkEmailVerified, onBack]);
 
   const handleResendVerification = async () => {
@@ -74,15 +100,24 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
     setIsChecking(true);
     
     try {
+      console.log('🔍 Manually checking email verification status...');
       const isVerified = await checkEmailVerified();
+      console.log('📧 Verification status:', isVerified);
+      
       if (isVerified) {
+        console.log('✅ Email verified! Redirecting to home...');
         onBack(); // Redirect to home when verified
       } else {
         setResendMessage('Email not verified yet. Please check your inbox and click the verification link.');
+        // Clear message after 5 seconds
+        setTimeout(() => setResendMessage(''), 5000);
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to check verification status. Please try again.';
+      console.error('❌ Failed to check verification:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check verification status.';
       setResendMessage(errorMessage);
+      // Clear message after 5 seconds
+      setTimeout(() => setResendMessage(''), 5000);
     } finally {
       setIsChecking(false);
     }
@@ -179,7 +214,7 @@ export default function EmailVerification({ darkMode, onBack, userEmail }: Email
                 <span>Checking...</span>
               </div>
             ) : (
-              "I&apos;ve Verified My Email"
+              "I've Verified My Email"
             )}
           </button>
 

@@ -354,11 +354,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkEmailVerified = async (): Promise<boolean> => {
     try {
       if (auth.currentUser) {
+        console.log('🔍 Reloading user to check latest verification status...');
         await reload(auth.currentUser);
-        return auth.currentUser.emailVerified;
+        const isVerified = auth.currentUser.emailVerified;
+        console.log('📧 Current verification status:', isVerified);
+        return isVerified;
       }
+      console.log('❌ No current user found');
       return false;
     } catch (error: any) {
+      console.error('❌ Error checking verification status:', error);
       throw new Error('Failed to check verification status');
     }
   };
