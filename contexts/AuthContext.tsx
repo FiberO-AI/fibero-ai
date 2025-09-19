@@ -250,12 +250,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           handleCodeInApp: false
         };
         
-        console.log('Attempting to send verification email to:', user.email);
-        console.log('Action URL:', actionCodeSettings.url);
-        console.log('User UID:', user.uid);
+        console.log('🔍 DEBUGGING EMAIL VERIFICATION:');
+        console.log('- User email:', user.email);
+        console.log('- User emailVerified:', user.emailVerified);
+        console.log('- Action URL:', actionCodeSettings.url);
+        console.log('- User UID:', user.uid);
+        console.log('- Firebase Auth Domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
+        console.log('- Current Origin:', window.location.origin);
         
         await sendEmailVerification(user, actionCodeSettings);
-        console.log('✅ Email verification sent successfully!');
+        console.log('✅ Email verification API call completed successfully!');
+        console.log('📧 Check your email inbox (including spam folder)');
+        console.log('🔗 Verification link should redirect to:', actionCodeSettings.url);
         
         // Store email in localStorage for debugging
         localStorage.setItem('pendingVerificationEmail', user.email || '');
@@ -313,17 +319,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const sendEmailVerificationToUser = async () => {
     try {
       if (auth.currentUser) {
+        console.log('🔍 MANUAL EMAIL VERIFICATION DEBUG:');
+        console.log('- Current user:', auth.currentUser.email);
+        console.log('- Email verified:', auth.currentUser.emailVerified);
+        
         // Use production URL if available, fallback to current origin
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
         const actionCodeSettings = {
           url: `${baseUrl}/auth/action`,
           handleCodeInApp: false
         };
-        await sendEmailVerification(auth.currentUser, actionCodeSettings);
+        
+        console.log('- Action URL:', actionCodeSettings.url);
+        
+        // Try with custom settings first
+        try {
+          await sendEmailVerification(auth.currentUser, actionCodeSettings);
+          console.log('✅ Email sent with custom action URL');
+        } catch (customError) {
+          console.warn('❌ Custom URL failed, trying default:', customError);
+          // Fallback to default Firebase settings
+          await sendEmailVerification(auth.currentUser);
+          console.log('✅ Email sent with default Firebase settings');
+        }
       } else {
         throw new Error('No user is currently signed in');
       }
     } catch (error: any) {
+      console.error('❌ All email verification attempts failed:', error);
       throw new Error(getErrorMessage(error.code));
     }
   };
@@ -483,6 +506,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return 'An error occurred. Please try again.';
     }
   };
+
+  // Global debug function for troubleshooting
+  if (typeof window !== 'undefined') {
+    (window as any).debugFirebaseAuth = () => {
+      console.log('🔍 FIREBASE AUTH DEBUG INFO:');
+      console.log('- Current user:', auth.currentUser?.email || 'No user');
+      console.log('- Email verified:', auth.currentUser?.emailVerified || 'N/A');
+      console.log('- Auth domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
+      console.log('- Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+      console.log('- Current origin:', window.location.origin);
+      console.log('- Site URL env:', process.env.NEXT_PUBLIC_SITE_URL);
+      
+      if (auth.currentUser) {
+        console.log('📧 To manually send verification email, run: window.manualSendVerification()');
+      }
+    };
+    
+    (window as any).manualSendVerification = async () => {
+      if (auth.currentUser) {
+        try {
+          await sendEmailVerification(auth.currentUser);
+          console.log('✅ Manual verification email sent (default settings)');
+        } catch (error) {
+          console.error('❌ Manual verification failed:', error);
+        }
+      } else {
+        console.log('❌ No user logged in');
+      }
+    };
+  }
 
   const value = {
     user,
