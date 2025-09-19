@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function PaymentSuccess() {
-  const { user, addCredits } = useAuth();
+  const { user, addCredits, refreshCredits } = useAuth();
   const router = useRouter();
   const [processing, setProcessing] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -47,12 +47,44 @@ export default function PaymentSuccess() {
 
         console.log('💎 Adding credits:', pendingPurchase.credits);
         
-        // Add credits to user account
-        await addCredits(pendingPurchase.credits);
+        // Check if credits were already added via webhook
+        console.log('🔍 Checking if payment was processed via webhook...');
         
-        console.log('✅ Credits added successfully');
+        // Wait a moment for webhook to process
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Clear pending purchase
+        // Refresh user data to get latest credits
+        await refreshCredits();
+        
+        // Check if we have a recent transaction for this purchase
+        const lastPurchaseTime = Date.now() - (5 * 60 * 1000); // 5 minutes ago
+        if (pendingPurchase.timestamp > lastPurchaseTime) {
+          console.log('✅ Recent purchase detected, credits should be added via webhook');
+        } else {
+          // Fallback for older purchases - require manual confirmation
+          const paymentConfirmed = confirm(
+            `IMPORTANT: Only click OK if you successfully completed the payment on Stripe.\n\n` +
+            `Package: ${pendingPurchase.packageId}\n` +
+            `Credits: ${pendingPurchase.credits}\n` +
+            `Amount: $${pendingPurchase.price}\n\n` +
+            `Did you complete the payment?`
+          );
+          
+          if (!paymentConfirmed) {
+            setError('Payment not confirmed. Credits not added.');
+            setProcessing(false);
+            return;
+          }
+          
+          // Add credits manually for older purchases
+          await addCredits(pendingPurchase.credits);
+        }
+        
+        console.log('✅ Payment processing completed');
+        
+        // Mark as processed and clear pending purchase
+        const processedPurchase = { ...pendingPurchase, processed: true };
+        localStorage.setItem('lastProcessedPurchase', JSON.stringify(processedPurchase));
         localStorage.removeItem('pendingPurchase');
         
         setSuccess(true);

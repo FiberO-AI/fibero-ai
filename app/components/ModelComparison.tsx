@@ -260,6 +260,7 @@ function ModelComparisonContent() {
   const [activeNavItem, setActiveNavItem] = useState('home');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [pendingPurchaseNotice, setPendingPurchaseNotice] = useState(false);
   const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
 
   // Prompt templates
@@ -373,11 +374,23 @@ function ModelComparisonContent() {
     // Check for pending purchase on page load
     const pendingPurchase = localStorage.getItem('pendingPurchase');
     if (pendingPurchase) {
-      console.log('🔍 Found pending purchase on main page:', pendingPurchase);
-      // Show a notification or button to process the purchase
-      const shouldProcess = confirm('We found a pending purchase. Would you like to process it now?');
-      if (shouldProcess) {
-        window.location.href = '/success';
+      try {
+        const purchaseData = JSON.parse(pendingPurchase);
+        console.log('🔍 Found pending purchase on main page:', purchaseData);
+        
+        // Check if it's recent (within last 10 minutes) and not processed
+        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+        if (purchaseData.timestamp > tenMinutesAgo && !purchaseData.processed) {
+          // Show notice and auto-redirect to success page for recent purchases
+          setPendingPurchaseNotice(true);
+          console.log('🚀 Auto-redirecting to process recent purchase...');
+          setTimeout(() => {
+            window.location.href = '/success';
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Error parsing pending purchase:', error);
+        localStorage.removeItem('pendingPurchase');
       }
     }
   }, []);

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { adminAuth, adminDb } from '../../../lib/firebase-optimized';
+import { chatRateLimiter } from '../../../lib/rate-limiter';
 
-// Type declaration for global fallback credits
-declare global {
-  var userCredits: { [userId: string]: number } | undefined;
-}
+// Cache for user credits to reduce Firebase calls
+const creditsCache = new Map<string, { credits: number; lastUpdated: number }>();
+const CACHE_DURATION = 30000; // 30 seconds
 
 // Initialize Firebase (server-side) - using same config as client
 const firebaseConfig = {

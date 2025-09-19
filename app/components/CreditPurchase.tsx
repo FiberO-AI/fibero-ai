@@ -92,11 +92,36 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       // Create client reference with package info for webhook processing
       const clientReference = `${user.uid}|${packageId}|${selectedPkg.priceId}`;
       
-      // Redirect to correct Stripe Checkout URL with package info
-      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${encodeURIComponent(currentDomain + '/success')}&cancel_url=${encodeURIComponent(currentDomain + '/cancel')}`;
+      // Store additional info for manual processing
+      const enhancedPurchaseInfo = {
+        ...purchaseInfo,
+        stripeUrl: baseCheckoutUrl,
+        timestamp: Date.now(),
+        processed: false
+      };
+      localStorage.setItem('pendingPurchase', JSON.stringify(enhancedPurchaseInfo));
       
-      // Open Stripe checkout in same window
-      window.location.href = stripeUrl;
+      // Redirect to Stripe Checkout (without custom URLs since they don't work reliably)
+      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}`;
+      
+      // Show clear instructions to user before redirect
+      const userConfirmed = confirm(`You'll be redirected to Stripe to complete your $${selectedPkg.price} payment.\n\nIMPORTANT: After payment, please return to this website and your credits will be automatically added.\n\nClick OK to continue to payment.`);
+      
+      if (!userConfirmed) {
+        setIsProcessing(false);
+        setSelectedPackage('');
+        return;
+      }
+      
+      // Open Stripe checkout in new tab so user can easily return
+      window.open(stripeUrl, '_blank');
+      
+      // Show processing message on current page
+      alert(`Payment window opened. After completing payment, return to this page and your credits will be automatically added.`);
+      
+      // Reset processing state so user can try again if needed
+      setIsProcessing(false);
+      setSelectedPackage('');
       
     } catch (error) {
       console.error('Payment redirect failed:', error);

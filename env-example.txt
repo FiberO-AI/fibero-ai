@@ -1,0 +1,8 @@
+# Stripe Configuration
+STRIPE_SECRET_KEY=sk_test_YOUR_STRIPE_SECRET_KEY_HERE
+STRIPE_WEBHOOK_SECRET=whsec_Yf58VHAt9jWJ2PF6nOqMwXA2srOkYH6J
+
+# Firebase Admin SDK (Get these from Firebase Console → Project Settings → Service Accounts)
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
