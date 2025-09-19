@@ -75,7 +75,7 @@ export default function PaymentSuccess() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
             <p className="text-gray-600 mb-6">
-              Your credits have been added to your account. You'll be redirected to the main app shortly.
+              Your credits have been added to your account. You&apos;ll be redirected to the main app shortly.
             </p>
             <button
               onClick={() => router.push('/')}

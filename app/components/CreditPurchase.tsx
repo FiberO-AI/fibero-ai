@@ -19,7 +19,7 @@ interface CreditPackage {
 }
 
 export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps) {
-  const { user, addCredits } = useAuth();
+  const { user } = useAuth();
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
