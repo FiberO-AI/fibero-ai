@@ -75,11 +75,25 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       // Get current domain for redirect URLs
       const currentDomain = window.location.origin;
       
+      // Map package IDs to their specific Stripe checkout URLs
+      const stripeCheckoutUrls: Record<string, string> = {
+        'starter': 'https://buy.stripe.com/6oUaEX7PP7vY47P5V70kE00',    // $5
+        'popular': 'https://buy.stripe.com/aFadR93zz8A247P4R30kE02',    // $20
+        'pro': 'https://buy.stripe.com/7sY14n9XX03wgUB2IV0kE01',       // $35
+        'enterprise': 'https://buy.stripe.com/28EaEXfih3fIfQxerD0kE03'  // $75
+      };
+
+      const baseCheckoutUrl = stripeCheckoutUrls[packageId];
+      
+      if (!baseCheckoutUrl) {
+        throw new Error('Invalid package selected');
+      }
+
       // Create client reference with package info for webhook processing
       const clientReference = `${user.uid}|${packageId}|${selectedPkg.priceId}`;
       
-      // Redirect to Stripe Checkout with package info in client reference
-      const stripeUrl = `https://buy.stripe.com/6oUaEX7PP7vY47P5V70kE00?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${encodeURIComponent(currentDomain + '/success')}&cancel_url=${encodeURIComponent(currentDomain + '/cancel')}`;
+      // Redirect to correct Stripe Checkout URL with package info
+      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${encodeURIComponent(currentDomain + '/success')}&cancel_url=${encodeURIComponent(currentDomain + '/cancel')}`;
       
       // Open Stripe checkout in same window
       window.location.href = stripeUrl;
