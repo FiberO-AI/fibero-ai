@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { adminAuth, adminDb } from '../../../lib/firebase-admin';
+import { adminAuth, adminDb } from '../../../lib/firebase-optimized';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2023-10-16',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -73,26 +73,24 @@ export async function POST(request: NextRequest) {
         await adminAuth.getUser(userId);
         
         // Add credits to user's Firestore document
-        const userRef = adminDb.collection('users').doc(userId);
+        const userDocRef = adminDb.collection('users').doc(userId);
+        const userDoc = await userDocRef.get();
+        const userData = userDoc.data();
+        const currentCredits = userData?.credits || 0;
+        const newCredits = currentCredits + totalCredits;
         
-        await adminDb.runTransaction(async (transaction: any) => {
-          const userDoc = await transaction.get(userRef);
-          const currentCredits = userDoc.data()?.credits || 0;
-          const newCredits = currentCredits + totalCredits;
-          
-          transaction.set(userRef, {
-            credits: newCredits,
-            lastPurchase: {
-              packageId,
-              credits: totalCredits,
-              amount: session.amount_total ? session.amount_total / 100 : 0,
-              timestamp: new Date(),
-              stripeSessionId: session.id
-            }
-          }, { merge: true });
-          
-          console.log(`✅ Added ${totalCredits} credits to user ${userId}. New total: ${newCredits}`);
-        });
+        await userDocRef.set({
+          credits: newCredits,
+          lastPurchase: {
+            packageId,
+            credits: totalCredits,
+            amount: session.amount_total ? session.amount_total / 100 : 0,
+            timestamp: new Date(),
+            stripeSessionId: session.id
+          }
+        }, { merge: true });
+        
+        console.log(`✅ Added ${totalCredits} credits to user ${userId}. New total: ${newCredits}`);
 
         // Log successful transaction
         await adminDb.collection('transactions').add({

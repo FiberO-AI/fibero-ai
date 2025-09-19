@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '../../../lib/firebase-optimized';
-import { chatRateLimiter } from '../../../lib/rate-limiter';
+// import { adminAuth, adminDb } from '../../../lib/firebase-optimized';
+// import { chatRateLimiter } from '../../../lib/rate-limiter';
 
 // Cache for user credits to reduce Firebase calls
-const creditsCache = new Map<string, { credits: number; lastUpdated: number }>();
-const CACHE_DURATION = 30000; // 30 seconds
+// const creditsCache = new Map<string, { credits: number; lastUpdated: number }>();
+// const CACHE_DURATION = 30000; // 30 seconds
 
 // Initialize Firebase (server-side) - using same config as client
 const firebaseConfig = {
