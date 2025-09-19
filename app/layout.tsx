@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from '../contexts/AuthContext';
-import AdSenseScript from './components/AdSenseScript';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,13 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Fibero AI - Model Comparison",
-  description: "Compare AI model responses side by side",
-  verification: {
-    google: "your-google-site-verification-code-here"
-  },
-  other: {
-    "google-adsense-account": "ca-pub-9108406017017093"
-  }
+  description: "Compare AI model responses side by side"
 };
 
 export default function RootLayout({
@@ -32,9 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <AdSenseScript />
-      </head>
+      <head></head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

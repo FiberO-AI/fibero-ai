@@ -1,4 +1,3 @@
-import AdSense from '../components/AdSense';
 
 export default function Privacy() {
   return (
@@ -39,17 +38,6 @@ export default function Privacy() {
           </section>
         </div>
 
-        {/* Advertisement */}
-        <div className="mt-8 flex justify-center">
-          <div className="bg-white rounded-2xl shadow-xl p-4">
-            <AdSense 
-              adSlot="1958348142" 
-              adFormat="auto"
-              style={{ display: 'block', minHeight: '250px', width: '100%', maxWidth: '336px' }}
-              className="text-center"
-            />
-          </div>
-        </div>
       </div>
     </div>
   );
