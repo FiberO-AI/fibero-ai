@@ -371,22 +371,18 @@ function ModelComparisonContent() {
       window.location.href = '/cancel';
     }
     
-    // Check for pending purchase on page load
+    // Check for pending purchase on page load (but don't auto-redirect)
     const pendingPurchase = localStorage.getItem('pendingPurchase');
     if (pendingPurchase) {
       try {
         const purchaseData = JSON.parse(pendingPurchase);
         console.log('🔍 Found pending purchase on main page:', purchaseData);
         
-        // Check if it's recent (within last 10 minutes) and not processed
-        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
-        if (purchaseData.timestamp > tenMinutesAgo && !purchaseData.processed) {
-          // Show notice and auto-redirect to success page for recent purchases
-          // setPendingPurchaseNotice(true);
-          console.log('🚀 Auto-redirecting to process recent purchase...');
-          setTimeout(() => {
-            window.location.href = '/success';
-          }, 2000);
+        // Only clean up old purchases, don't auto-redirect
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        if (purchaseData.timestamp < oneHourAgo) {
+          console.log('🧹 Cleaning up old pending purchase');
+          localStorage.removeItem('pendingPurchase');
         }
       } catch (error) {
         console.error('Error parsing pending purchase:', error);

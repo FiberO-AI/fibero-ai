@@ -101,27 +101,15 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       };
       localStorage.setItem('pendingPurchase', JSON.stringify(enhancedPurchaseInfo));
       
-      // Redirect to Stripe Checkout (without custom URLs since they don't work reliably)
-      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}`;
+      // Create Stripe URL with proper redirect
+      const successUrl = encodeURIComponent('https://fibero-ai.vercel.app/success');
+      const cancelUrl = encodeURIComponent('https://fibero-ai.vercel.app');
+      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
       
-      // Show clear instructions to user before redirect
-      const userConfirmed = confirm(`You'll be redirected to Stripe to complete your $${selectedPkg.price} payment.\n\nIMPORTANT: After payment, please return to this website and your credits will be automatically added.\n\nClick OK to continue to payment.`);
+      console.log('🚀 Redirecting to Stripe:', stripeUrl);
       
-      if (!userConfirmed) {
-        setIsProcessing(false);
-        setSelectedPackage('');
-        return;
-      }
-      
-      // Open Stripe checkout in new tab so user can easily return
-      window.open(stripeUrl, '_blank');
-      
-      // Show processing message on current page
-      alert(`Payment window opened. After completing payment, return to this page and your credits will be automatically added.`);
-      
-      // Reset processing state so user can try again if needed
-      setIsProcessing(false);
-      setSelectedPackage('');
+      // Redirect to Stripe checkout in same window
+      window.location.href = stripeUrl;
       
     } catch (error) {
       console.error('Payment redirect failed:', error);

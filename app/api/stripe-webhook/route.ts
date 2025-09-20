@@ -10,11 +10,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
+// Handle GET requests (for testing)
+export async function GET() {
+  return NextResponse.json({ 
+    message: 'Stripe webhook endpoint is active',
+    timestamp: new Date().toISOString()
+  });
+}
+
 export async function POST(request: NextRequest) {
+  console.log('🔔 Webhook received POST request');
+  
   try {
     const body = await request.text();
+    console.log('📦 Request body length:', body.length);
+    
     const headersList = await headers();
     const signature = headersList.get('stripe-signature');
+    console.log('🔐 Stripe signature present:', !!signature);
 
     if (!signature) {
       console.error('❌ No Stripe signature found');

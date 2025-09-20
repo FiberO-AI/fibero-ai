@@ -47,40 +47,16 @@ export default function PaymentSuccess() {
 
         console.log('💎 Adding credits:', pendingPurchase.credits);
         
-        // Check if credits were already added via webhook
-        console.log('🔍 Checking if payment was processed via webhook...');
+        // Wait for webhook to process the payment (webhook should handle credit addition)
+        console.log('⏳ Waiting for webhook to process payment...');
         
-        // Wait a moment for webhook to process
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Wait 5 seconds for webhook to process
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // Refresh user data to get latest credits
+        // Refresh user data to get latest credits from webhook
         await refreshCredits();
         
-        // Check if we have a recent transaction for this purchase
-        const lastPurchaseTime = Date.now() - (5 * 60 * 1000); // 5 minutes ago
-        if (pendingPurchase.timestamp > lastPurchaseTime) {
-          console.log('✅ Recent purchase detected, credits should be added via webhook');
-        } else {
-          // Fallback for older purchases - require manual confirmation
-          const paymentConfirmed = confirm(
-            `IMPORTANT: Only click OK if you successfully completed the payment on Stripe.\n\n` +
-            `Package: ${pendingPurchase.packageId}\n` +
-            `Credits: ${pendingPurchase.credits}\n` +
-            `Amount: $${pendingPurchase.price}\n\n` +
-            `Did you complete the payment?`
-          );
-          
-          if (!paymentConfirmed) {
-            setError('Payment not confirmed. Credits not added.');
-            setProcessing(false);
-            return;
-          }
-          
-          // Add credits manually for older purchases
-          await addCredits(pendingPurchase.credits);
-        }
-        
-        console.log('✅ Payment processing completed');
+        console.log('✅ Payment processing completed - credits should be added by webhook');
         
         // Mark as processed and clear pending purchase
         const processedPurchase = { ...pendingPurchase, processed: true };
