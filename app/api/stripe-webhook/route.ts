@@ -122,80 +122,34 @@ export async function POST(request: NextRequest) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       
-      console.log('💳 Payment completed:', session.id);
-      console.log('👤 Client reference:', session.client_reference_id);
-      console.log('💰 Amount paid:', session.amount_total);
+      // Get customer email and amount
+      const customerEmail = session.customer_details?.email;
+      const amountInDollars = session.amount_total ? session.amount_total / 100 : 0;
       
-      // Parse client reference: "userId|packageId|priceId"
-      const clientRef = session.client_reference_id;
-      if (!clientRef) {
-        console.error('❌ No client reference found - using amount to determine package');
-        
-        // Fallback: determine package by amount paid
-        const amountInDollars = session.amount_total ? session.amount_total / 100 : 0;
-        let packageId = 'starter';
-        if (amountInDollars >= 75) packageId = 'enterprise';
-        else if (amountInDollars >= 35) packageId = 'pro';
-        else if (amountInDollars >= 20) packageId = 'popular';
-        
-        console.log(`🔄 Fallback: Using package ${packageId} for amount $${amountInDollars}`);
-        
-        // Get customer email to find user
-        const customerEmail = session.customer_details?.email;
-        if (!customerEmail) {
-          console.error('❌ No customer email found');
-          return NextResponse.json({ error: 'No customer email' }, { status: 400 });
-        }
-        
-        // Find user by email
-        try {
-          const userRecord = await adminAuth.getUserByEmail(customerEmail);
-          const userId = userRecord.uid;
-          
-          await addCreditsToUser(userId, packageId, session);
-          return NextResponse.json({ received: true });
-        } catch (userError) {
-          console.error('❌ User not found by email:', customerEmail, userError);
-          return NextResponse.json({ error: 'User not found' }, { status: 400 });
-        }
+      if (!customerEmail) {
+        console.error('❌ No customer email found');
+        return NextResponse.json({ error: 'No customer email' }, { status: 400 });
       }
-
-      const [userId, packageId] = clientRef.split('|');
       
-      if (!userId || !packageId) {
-        console.error('❌ Invalid client reference format:', clientRef);
-        return NextResponse.json({ error: 'Invalid client reference' }, { status: 400 });
-      }
-
-
+      // Determine package by amount paid
+      let packageId = 'starter';
+      if (amountInDollars >= 75) packageId = 'enterprise';
+      else if (amountInDollars >= 35) packageId = 'pro';
+      else if (amountInDollars >= 20) packageId = 'popular';
+      
       try {
-        // Verify user exists in Firebase
-        const userRecord = await adminAuth.getUser(userId);
-        console.log(`👤 User verified: ${userRecord.email}`);
+        // Find user by email
+        const userRecord = await adminAuth.getUserByEmail(customerEmail);
+        const userId = userRecord.uid;
         
-        // Add credits using helper function
+        // Add credits
         await addCreditsToUser(userId, packageId, session);
         
-        console.log('🎉 Transaction completed successfully');
+        console.log(`✅ Added credits to ${customerEmail} for $${amountInDollars} payment`);
         
       } catch (error) {
         console.error('❌ Error processing payment:', error);
-        
-        // Try fallback approach using email
-        const customerEmail = session.customer_details?.email;
-        if (customerEmail) {
-          console.log('🔄 Trying fallback with customer email:', customerEmail);
-          try {
-            const userRecord = await adminAuth.getUserByEmail(customerEmail);
-            await addCreditsToUser(userRecord.uid, packageId, session);
-            console.log('✅ Fallback successful');
-          } catch (fallbackError) {
-            console.error('❌ Fallback also failed:', fallbackError);
-            return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 });
-          }
-        } else {
-          return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 });
-        }
+        return NextResponse.json({ error: 'Failed to process payment' }, { status: 500 });
       }
     }
 

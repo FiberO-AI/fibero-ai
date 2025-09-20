@@ -89,10 +89,7 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
         throw new Error('Invalid package selected');
       }
 
-      // Create client reference with package info for webhook processing
-      const clientReference = `${user.uid}|${packageId}|${selectedPkg.priceId}`;
-      
-      // Store additional info for manual processing
+      // Store purchase info for success page
       const enhancedPurchaseInfo = {
         ...purchaseInfo,
         stripeUrl: baseCheckoutUrl,
@@ -101,10 +98,8 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       };
       localStorage.setItem('pendingPurchase', JSON.stringify(enhancedPurchaseInfo));
       
-      // Create Stripe URL with proper redirect
-      const successUrl = encodeURIComponent('https://fibero-ai.vercel.app/success');
-      const cancelUrl = encodeURIComponent('https://fibero-ai.vercel.app');
-      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
+      // Create Stripe URL with prefilled email (webhook will use email to find user)
+      const stripeUrl = `${baseCheckoutUrl}?prefilled_email=${encodeURIComponent(user.email || '')}`;
       
       console.log('🚀 Redirecting to Stripe:', stripeUrl);
       
