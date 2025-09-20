@@ -88,7 +88,9 @@ async function addCreditsToUser(userId: string, packageId: string, session: Stri
 export async function GET() {
   return NextResponse.json({ 
     message: 'Stripe webhook endpoint is active',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    endpoint: 'https://fibero-ai.vercel.app/api/stripe-webhook',
+    instructions: 'Add this endpoint to your Stripe Dashboard > Webhooks with event: checkout.session.completed'
   });
 }
 
