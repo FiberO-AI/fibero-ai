@@ -29,23 +29,48 @@ async function addCreditsToUser(userId: string, packageId: string, session: Stri
 
   // Add credits to user's Firestore document
   const userDocRef = adminDb.collection('users').doc(userId);
-  const userDoc = await userDocRef.get();
-  const userData = userDoc.data();
-  const currentCredits = userData?.credits || 0;
-  const newCredits = currentCredits + totalCredits;
   
-  await userDocRef.set({
-    credits: newCredits,
-    lastPurchase: {
-      packageId,
+  try {
+    const userDoc = await userDocRef.get();
+    const userData = userDoc.data();
+    const currentCredits = userData?.credits || 0;
+    const newCredits = currentCredits + totalCredits;
+    
+    // Update user document with new credits
+    await userDocRef.update({
+      credits: newCredits,
+      totalCreditsPurchased: (userData?.totalCreditsPurchased || 0) + totalCredits,
+      lastPurchase: {
+        packageId,
+        credits: totalCredits,
+        amount: session.amount_total ? session.amount_total / 100 : 0,
+        timestamp: new Date(),
+        stripeSessionId: session.id
+      }
+    });
+    
+    console.log(`✅ Updated user ${userId}: ${currentCredits} → ${newCredits} credits`);
+    
+  } catch (updateError) {
+    console.log('User document may not exist, creating it...');
+    
+    // If user document doesn't exist, create it
+    await userDocRef.set({
       credits: totalCredits,
-      amount: session.amount_total ? session.amount_total / 100 : 0,
-      timestamp: new Date(),
-      stripeSessionId: session.id
-    }
-  }, { merge: true });
-  
-  console.log(`✅ Added ${totalCredits} credits to user ${userId}. New total: ${newCredits}`);
+      totalCreditsPurchased: totalCredits,
+      totalCreditsUsed: 0,
+      createdAt: new Date(),
+      lastPurchase: {
+        packageId,
+        credits: totalCredits,
+        amount: session.amount_total ? session.amount_total / 100 : 0,
+        timestamp: new Date(),
+        stripeSessionId: session.id
+      }
+    });
+    
+    console.log(`✅ Created new user document for ${userId} with ${totalCredits} credits`);
+  }
 
   // Log transaction
   await adminDb.collection('transactions').add({
@@ -145,7 +170,8 @@ export async function POST(request: NextRequest) {
 
       try {
         // Verify user exists in Firebase
-        await adminAuth.getUser(userId);
+        const userRecord = await adminAuth.getUser(userId);
+        console.log(`👤 User verified: ${userRecord.email}`);
         
         // Add credits using helper function
         await addCreditsToUser(userId, packageId, session);
@@ -153,8 +179,23 @@ export async function POST(request: NextRequest) {
         console.log('🎉 Transaction completed successfully');
         
       } catch (error) {
-        console.error('❌ Error adding credits:', error);
-        return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 });
+        console.error('❌ Error processing payment:', error);
+        
+        // Try fallback approach using email
+        const customerEmail = session.customer_details?.email;
+        if (customerEmail) {
+          console.log('🔄 Trying fallback with customer email:', customerEmail);
+          try {
+            const userRecord = await adminAuth.getUserByEmail(customerEmail);
+            await addCreditsToUser(userRecord.uid, packageId, session);
+            console.log('✅ Fallback successful');
+          } catch (fallbackError) {
+            console.error('❌ Fallback also failed:', fallbackError);
+            return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 });
+          }
+        } else {
+          return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 });
+        }
       }
     }
 
