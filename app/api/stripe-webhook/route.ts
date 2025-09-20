@@ -133,25 +133,39 @@ export async function POST(request: NextRequest) {
       else if (amountInDollars >= 20) packageId = 'popular';
       
       try {
-        // Since prefilled_email is your FiberO email, use that directly
-        // The payment might be made with a different email, but we want credits to go to FiberO account
-        
-        // Look for recent user who initiated a purchase (within last 30 minutes)
+        // Find exact matching purchase by amount and package (within last 30 minutes)
         const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
-        const usersSnapshot = await adminDb.collection('email-mappings')
-          .where('createdAt', '>', new Date(thirtyMinutesAgo))
-          .orderBy('createdAt', 'desc')
-          .limit(1)
+        const mappingsSnapshot = await adminDb.collection('purchase-mappings')
+          .where('timestamp', '>', thirtyMinutesAgo)
+          .where('amount', '==', amountInDollars)
+          .orderBy('timestamp', 'desc')
+          .limit(5)
           .get();
         
-        if (usersSnapshot.empty) {
-          console.error('❌ No recent user found');
-          return NextResponse.json({ error: 'No recent user found' }, { status: 400 });
+        if (mappingsSnapshot.empty) {
+          console.error('❌ No matching purchase found');
+          return NextResponse.json({ error: 'No matching purchase found' }, { status: 400 });
         }
         
-        const userData = usersSnapshot.docs[0].data();
-        const fiberoEmail = userData.fiberoEmail;
-        const userId = userData.userId;
+        // Find the exact match by package
+        let matchedMapping = null;
+        for (const doc of mappingsSnapshot.docs) {
+          const mapping = doc.data();
+          if (mapping.packageId === packageId) {
+            matchedMapping = mapping;
+            // Delete the used mapping to prevent duplicate credits
+            await doc.ref.delete();
+            break;
+          }
+        }
+        
+        if (!matchedMapping) {
+          console.error('❌ No exact package match found');
+          return NextResponse.json({ error: 'No exact package match' }, { status: 400 });
+        }
+        
+        const fiberoEmail = matchedMapping.fiberoEmail;
+        const userId = matchedMapping.userId;
         
         // Add credits directly using userId
         await addCreditsToUser(userId, packageId, session);

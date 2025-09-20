@@ -107,13 +107,16 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
         timestamp: Date.now()
       };
       
-      // Store email mapping for webhook
+      // Store purchase mapping for webhook with unique identifier
       await fetch('/api/store-email-mapping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fiberoEmail: user.email,
-          userId: user.uid
+          userId: user.uid,
+          packageId: packageId,
+          amount: selectedPkg.price,
+          timestamp: Date.now()
         })
       });
       
