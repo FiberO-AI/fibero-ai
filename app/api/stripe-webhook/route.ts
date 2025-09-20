@@ -124,41 +124,48 @@ export async function POST(request: NextRequest) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       
-      // Get FiberO email from client_reference_id and amount
-      const clientRef = session.client_reference_id;
       const amountInDollars = session.amount_total ? session.amount_total / 100 : 0;
       
-      let fiberoEmail: string;
-      let packageId: string;
-      
-      if (clientRef) {
-        // Parse client reference: "fiberoEmail|packageId"
-        const [email, pkg] = clientRef.split('|');
-        fiberoEmail = email;
-        packageId = pkg;
-      } else {
-        // Fallback: use payment email and determine package by amount
-        fiberoEmail = session.customer_details?.email || '';
-        if (amountInDollars >= 75) packageId = 'enterprise';
-        else if (amountInDollars >= 35) packageId = 'pro';
-        else if (amountInDollars >= 20) packageId = 'popular';
-        else packageId = 'starter';
-      }
-      
-      if (!fiberoEmail) {
-        console.error('❌ No FiberO email found');
-        return NextResponse.json({ error: 'No email found' }, { status: 400 });
-      }
+      // Determine package by amount
+      let packageId = 'starter';
+      if (amountInDollars >= 75) packageId = 'enterprise';
+      else if (amountInDollars >= 35) packageId = 'pro';
+      else if (amountInDollars >= 20) packageId = 'popular';
       
       try {
-        // Find user by FiberO email (not payment email)
-        const userRecord = await adminAuth.getUserByEmail(fiberoEmail);
-        const userId = userRecord.uid;
+        // Look for recent purchase mapping (within last 10 minutes)
+        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+        const mappingsSnapshot = await adminDb.collection('purchase-mappings')
+          .where('timestamp', '>', tenMinutesAgo)
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .get();
         
-        // Add credits
+        let fiberoEmail = '';
+        let userId = '';
+        
+        // Find matching mapping by package and timing
+        for (const doc of mappingsSnapshot.docs) {
+          const mapping = doc.data();
+          if (mapping.packageId === packageId) {
+            fiberoEmail = mapping.fiberoEmail;
+            userId = mapping.userId;
+            
+            // Delete the used mapping
+            await doc.ref.delete();
+            break;
+          }
+        }
+        
+        if (!fiberoEmail || !userId) {
+          console.error('❌ No matching purchase mapping found');
+          return NextResponse.json({ error: 'No mapping found' }, { status: 400 });
+        }
+        
+        // Add credits directly using userId
         await addCreditsToUser(userId, packageId, session);
         
-        console.log(`✅ Added ${packageId} credits to FiberO account ${fiberoEmail} for $${amountInDollars} payment`);
+        console.log(`✅ Added ${packageId} credits to ${fiberoEmail} for $${amountInDollars}`);
         
       } catch (error) {
         console.error('❌ Error processing payment:', error);

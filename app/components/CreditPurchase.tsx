@@ -99,11 +99,23 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
       };
       localStorage.setItem('pendingPurchase', JSON.stringify(enhancedPurchaseInfo));
       
-      // Create client reference with FiberO email and package info
-      const clientReference = `${user.email}|${packageId}`;
+      // Store mapping in our database for webhook to use
+      const mappingData = {
+        fiberoEmail: user.email,
+        packageId: packageId,
+        userId: user.uid,
+        timestamp: Date.now()
+      };
       
-      // Create Stripe URL with client reference containing FiberO email
-      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}`;
+      // Send mapping to our API
+      await fetch('/api/store-purchase-mapping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mappingData)
+      });
+      
+      // Create Stripe URL with prefilled FiberO email
+      const stripeUrl = `${baseCheckoutUrl}?prefilled_email=${encodeURIComponent(user.email || '')}`;
       
       console.log('🚀 Redirecting to Stripe:', stripeUrl);
       
