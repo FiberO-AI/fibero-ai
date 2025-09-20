@@ -195,7 +195,7 @@ async function deductUserCredits(userId: string, amount: number): Promise<boolea
     
     // Fallback: Use a simple in-memory credit system for development
     // In production, you'd want to use a more robust fallback like Redis
-    const globalAny = global as any;
+    const globalAny = global as { userCredits?: Record<string, number> };
     if (!globalAny.userCredits) {
       globalAny.userCredits = {};
     }
