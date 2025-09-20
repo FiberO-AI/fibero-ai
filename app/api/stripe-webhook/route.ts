@@ -133,34 +133,25 @@ export async function POST(request: NextRequest) {
       else if (amountInDollars >= 20) packageId = 'popular';
       
       try {
-        // Look for recent purchase mapping (within last 10 minutes)
-        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
-        const mappingsSnapshot = await adminDb.collection('purchase-mappings')
-          .where('timestamp', '>', tenMinutesAgo)
-          .orderBy('timestamp', 'desc')
-          .limit(10)
+        // Since prefilled_email is your FiberO email, use that directly
+        // The payment might be made with a different email, but we want credits to go to FiberO account
+        
+        // Look for recent user who initiated a purchase (within last 30 minutes)
+        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+        const usersSnapshot = await adminDb.collection('email-mappings')
+          .where('createdAt', '>', new Date(thirtyMinutesAgo))
+          .orderBy('createdAt', 'desc')
+          .limit(1)
           .get();
         
-        let fiberoEmail = '';
-        let userId = '';
-        
-        // Find matching mapping by package and timing
-        for (const doc of mappingsSnapshot.docs) {
-          const mapping = doc.data();
-          if (mapping.packageId === packageId) {
-            fiberoEmail = mapping.fiberoEmail;
-            userId = mapping.userId;
-            
-            // Delete the used mapping
-            await doc.ref.delete();
-            break;
-          }
+        if (usersSnapshot.empty) {
+          console.error('❌ No recent user found');
+          return NextResponse.json({ error: 'No recent user found' }, { status: 400 });
         }
         
-        if (!fiberoEmail || !userId) {
-          console.error('❌ No matching purchase mapping found');
-          return NextResponse.json({ error: 'No mapping found' }, { status: 400 });
-        }
+        const userData = usersSnapshot.docs[0].data();
+        const fiberoEmail = userData.fiberoEmail;
+        const userId = userData.userId;
         
         // Add credits directly using userId
         await addCreditsToUser(userId, packageId, session);

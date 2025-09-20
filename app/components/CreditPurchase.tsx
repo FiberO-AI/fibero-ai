@@ -107,11 +107,14 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
         timestamp: Date.now()
       };
       
-      // Send mapping to our API
-      await fetch('/api/store-purchase-mapping', {
+      // Store email mapping for webhook
+      await fetch('/api/store-email-mapping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mappingData)
+        body: JSON.stringify({
+          fiberoEmail: user.email,
+          userId: user.uid
+        })
       });
       
       // Create Stripe URL with prefilled FiberO email
