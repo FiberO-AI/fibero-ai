@@ -10,6 +10,55 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
+// Helper function to add credits to user
+async function addCreditsToUser(userId: string, packageId: string, session: any) {
+  // Define credit packages
+  const creditPackages: Record<string, { credits: number; bonus?: number }> = {
+    'starter': { credits: 100 },
+    'popular': { credits: 500, bonus: 50 },
+    'pro': { credits: 1000, bonus: 150 },
+    'enterprise': { credits: 2500, bonus: 500 }
+  };
+
+  const packageInfo = creditPackages[packageId];
+  if (!packageInfo) {
+    throw new Error(`Invalid package: ${packageId}`);
+  }
+
+  const totalCredits = packageInfo.credits + (packageInfo.bonus || 0);
+
+  // Add credits to user's Firestore document
+  const userDocRef = adminDb.collection('users').doc(userId);
+  const userDoc = await userDocRef.get();
+  const userData = userDoc.data();
+  const currentCredits = userData?.credits || 0;
+  const newCredits = currentCredits + totalCredits;
+  
+  await userDocRef.set({
+    credits: newCredits,
+    lastPurchase: {
+      packageId,
+      credits: totalCredits,
+      amount: session.amount_total ? session.amount_total / 100 : 0,
+      timestamp: new Date(),
+      stripeSessionId: session.id
+    }
+  }, { merge: true });
+  
+  console.log(`✅ Added ${totalCredits} credits to user ${userId}. New total: ${newCredits}`);
+
+  // Log transaction
+  await adminDb.collection('transactions').add({
+    userId,
+    packageId,
+    credits: totalCredits,
+    amount: session.amount_total ? session.amount_total / 100 : 0,
+    stripeSessionId: session.id,
+    timestamp: new Date(),
+    status: 'completed'
+  });
+}
+
 // Handle GET requests (for testing)
 export async function GET() {
   return NextResponse.json({ 
@@ -50,72 +99,57 @@ export async function POST(request: NextRequest) {
       
       console.log('💳 Payment completed:', session.id);
       console.log('👤 Client reference:', session.client_reference_id);
+      console.log('💰 Amount paid:', session.amount_total);
       
       // Parse client reference: "userId|packageId|priceId"
       const clientRef = session.client_reference_id;
       if (!clientRef) {
-        console.error('❌ No client reference found');
-        return NextResponse.json({ error: 'No client reference' }, { status: 400 });
+        console.error('❌ No client reference found - using amount to determine package');
+        
+        // Fallback: determine package by amount paid
+        const amountInDollars = session.amount_total ? session.amount_total / 100 : 0;
+        let packageId = 'starter';
+        if (amountInDollars >= 75) packageId = 'enterprise';
+        else if (amountInDollars >= 35) packageId = 'pro';
+        else if (amountInDollars >= 20) packageId = 'popular';
+        
+        console.log(`🔄 Fallback: Using package ${packageId} for amount $${amountInDollars}`);
+        
+        // Get customer email to find user
+        const customerEmail = session.customer_details?.email;
+        if (!customerEmail) {
+          console.error('❌ No customer email found');
+          return NextResponse.json({ error: 'No customer email' }, { status: 400 });
+        }
+        
+        // Find user by email
+        try {
+          const userRecord = await adminAuth.getUserByEmail(customerEmail);
+          const userId = userRecord.uid;
+          
+          await addCreditsToUser(userId, packageId, session);
+          return NextResponse.json({ received: true });
+        } catch (error) {
+          console.error('❌ User not found by email:', customerEmail);
+          return NextResponse.json({ error: 'User not found' }, { status: 400 });
+        }
       }
 
       const [userId, packageId, priceId] = clientRef.split('|');
       
-      if (!userId || !packageId || !priceId) {
+      if (!userId || !packageId) {
         console.error('❌ Invalid client reference format:', clientRef);
         return NextResponse.json({ error: 'Invalid client reference' }, { status: 400 });
       }
 
-      // Define credit packages (same as frontend)
-      const creditPackages: Record<string, { credits: number; bonus?: number }> = {
-        'starter': { credits: 100 },
-        'popular': { credits: 500, bonus: 50 },
-        'pro': { credits: 1000, bonus: 150 },
-        'enterprise': { credits: 2500, bonus: 500 }
-      };
-
-      const packageInfo = creditPackages[packageId];
-      if (!packageInfo) {
-        console.error('❌ Invalid package ID:', packageId);
-        return NextResponse.json({ error: 'Invalid package' }, { status: 400 });
-      }
-
-      const totalCredits = packageInfo.credits + (packageInfo.bonus || 0);
 
       try {
         // Verify user exists in Firebase
         await adminAuth.getUser(userId);
         
-        // Add credits to user's Firestore document
-        const userDocRef = adminDb.collection('users').doc(userId);
-        const userDoc = await userDocRef.get();
-        const userData = userDoc.data();
-        const currentCredits = userData?.credits || 0;
-        const newCredits = currentCredits + totalCredits;
+        // Add credits using helper function
+        await addCreditsToUser(userId, packageId, session);
         
-        await userDocRef.set({
-          credits: newCredits,
-          lastPurchase: {
-            packageId,
-            credits: totalCredits,
-            amount: session.amount_total ? session.amount_total / 100 : 0,
-            timestamp: new Date(),
-            stripeSessionId: session.id
-          }
-        }, { merge: true });
-        
-        console.log(`✅ Added ${totalCredits} credits to user ${userId}. New total: ${newCredits}`);
-
-        // Log successful transaction
-        await adminDb.collection('transactions').add({
-          userId,
-          packageId,
-          credits: totalCredits,
-          amount: session.amount_total ? session.amount_total / 100 : 0,
-          stripeSessionId: session.id,
-          timestamp: new Date(),
-          status: 'completed'
-        });
-
         console.log('🎉 Transaction completed successfully');
         
       } catch (error) {
