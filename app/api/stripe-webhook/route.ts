@@ -134,11 +134,11 @@ export async function POST(request: NextRequest) {
       
       try {
         // Find exact matching purchase by amount and package (within last 30 minutes)
-        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+        const thirtyMinutesAgo = new Date(Date.now() - (30 * 60 * 1000));
         const mappingsSnapshot = await adminDb.collection('purchase-mappings')
-          .where('timestamp', '>', thirtyMinutesAgo)
+          .where('createdAt', '>', thirtyMinutesAgo)
           .where('amount', '==', amountInDollars)
-          .orderBy('timestamp', 'desc')
+          .orderBy('createdAt', 'desc')
           .limit(5)
           .get();
         
