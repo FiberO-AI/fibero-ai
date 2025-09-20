@@ -124,30 +124,41 @@ export async function POST(request: NextRequest) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       
-      // Get customer email and amount
-      const customerEmail = session.customer_details?.email;
+      // Get FiberO email from client_reference_id and amount
+      const clientRef = session.client_reference_id;
       const amountInDollars = session.amount_total ? session.amount_total / 100 : 0;
       
-      if (!customerEmail) {
-        console.error('❌ No customer email found');
-        return NextResponse.json({ error: 'No customer email' }, { status: 400 });
+      let fiberoEmail: string;
+      let packageId: string;
+      
+      if (clientRef) {
+        // Parse client reference: "fiberoEmail|packageId"
+        const [email, pkg] = clientRef.split('|');
+        fiberoEmail = email;
+        packageId = pkg;
+      } else {
+        // Fallback: use payment email and determine package by amount
+        fiberoEmail = session.customer_details?.email || '';
+        if (amountInDollars >= 75) packageId = 'enterprise';
+        else if (amountInDollars >= 35) packageId = 'pro';
+        else if (amountInDollars >= 20) packageId = 'popular';
+        else packageId = 'starter';
       }
       
-      // Determine package by amount paid
-      let packageId = 'starter';
-      if (amountInDollars >= 75) packageId = 'enterprise';
-      else if (amountInDollars >= 35) packageId = 'pro';
-      else if (amountInDollars >= 20) packageId = 'popular';
+      if (!fiberoEmail) {
+        console.error('❌ No FiberO email found');
+        return NextResponse.json({ error: 'No email found' }, { status: 400 });
+      }
       
       try {
-        // Find user by email
-        const userRecord = await adminAuth.getUserByEmail(customerEmail);
+        // Find user by FiberO email (not payment email)
+        const userRecord = await adminAuth.getUserByEmail(fiberoEmail);
         const userId = userRecord.uid;
         
         // Add credits
         await addCreditsToUser(userId, packageId, session);
         
-        console.log(`✅ Added credits to ${customerEmail} for $${amountInDollars} payment`);
+        console.log(`✅ Added ${packageId} credits to FiberO account ${fiberoEmail} for $${amountInDollars} payment`);
         
       } catch (error) {
         console.error('❌ Error processing payment:', error);

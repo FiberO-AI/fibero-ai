@@ -89,17 +89,21 @@ export default function CreditPurchase({ darkMode, onBack }: CreditPurchaseProps
         throw new Error('Invalid package selected');
       }
 
-      // Store purchase info for success page
+      // Store purchase info for success page including FiberO account email
       const enhancedPurchaseInfo = {
         ...purchaseInfo,
         stripeUrl: baseCheckoutUrl,
         timestamp: Date.now(),
-        processed: false
+        processed: false,
+        fiberoEmail: user.email // Store the FiberO account email
       };
       localStorage.setItem('pendingPurchase', JSON.stringify(enhancedPurchaseInfo));
       
-      // Create Stripe URL with prefilled email (webhook will use email to find user)
-      const stripeUrl = `${baseCheckoutUrl}?prefilled_email=${encodeURIComponent(user.email || '')}`;
+      // Create client reference with FiberO email and package info
+      const clientReference = `${user.email}|${packageId}`;
+      
+      // Create Stripe URL with client reference containing FiberO email
+      const stripeUrl = `${baseCheckoutUrl}?client_reference_id=${encodeURIComponent(clientReference)}&prefilled_email=${encodeURIComponent(user.email || '')}`;
       
       console.log('🚀 Redirecting to Stripe:', stripeUrl);
       
