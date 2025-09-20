@@ -133,35 +133,43 @@ export async function POST(request: NextRequest) {
       else if (amountInDollars >= 20) packageId = 'popular';
       
       try {
-        // Find exact matching purchase by amount and package (within last 30 minutes)
-        const thirtyMinutesAgo = new Date(Date.now() - (30 * 60 * 1000));
+        // Simple approach: get all recent mappings and find match
         const mappingsSnapshot = await adminDb.collection('purchase-mappings')
-          .where('createdAt', '>', thirtyMinutesAgo)
-          .where('amount', '==', amountInDollars)
           .orderBy('createdAt', 'desc')
-          .limit(5)
+          .limit(10)
           .get();
         
         if (mappingsSnapshot.empty) {
-          console.error('❌ No matching purchase found');
-          return NextResponse.json({ error: 'No matching purchase found' }, { status: 400 });
+          console.error('❌ No purchase mappings found');
+          return NextResponse.json({ error: 'No mappings found' }, { status: 400 });
         }
         
-        // Find the exact match by package
+        // Find matching mapping by amount, package, and timing precision
         let matchedMapping = null;
+        let matchedDoc = null;
+        
+        // Get Stripe session creation time for precise matching
+        const stripeSessionCreated = session.created * 1000; // Convert to milliseconds
+        
         for (const doc of mappingsSnapshot.docs) {
           const mapping = doc.data();
-          if (mapping.packageId === packageId) {
+          const mappingTime = mapping.createdAt.toDate();
+          const timeDiff = Date.now() - mappingTime.getTime();
+          
+          // Check if mapping matches: recent + amount + package + timing precision
+          if (timeDiff < 30 * 60 * 1000 && 
+              mapping.amount === amountInDollars && 
+              mapping.packageId === packageId &&
+              Math.abs(mapping.timestamp - stripeSessionCreated) < 120000) { // Within 2 minutes
             matchedMapping = mapping;
-            // Delete the used mapping to prevent duplicate credits
-            await doc.ref.delete();
+            matchedDoc = doc;
             break;
           }
         }
         
         if (!matchedMapping) {
-          console.error('❌ No exact package match found');
-          return NextResponse.json({ error: 'No exact package match' }, { status: 400 });
+          console.error('❌ No matching mapping found for amount:', amountInDollars, 'package:', packageId);
+          return NextResponse.json({ error: 'No matching mapping found' }, { status: 400 });
         }
         
         const fiberoEmail = matchedMapping.fiberoEmail;
@@ -169,6 +177,9 @@ export async function POST(request: NextRequest) {
         
         // Add credits directly using userId
         await addCreditsToUser(userId, packageId, session);
+        
+        // Delete the used mapping
+        await matchedDoc.ref.delete();
         
         console.log(`✅ Added ${packageId} credits to ${fiberoEmail} for $${amountInDollars}`);
         
