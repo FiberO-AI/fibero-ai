@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 // Helper function to add credits to user
-async function addCreditsToUser(userId: string, packageId: string, session: any) {
+async function addCreditsToUser(userId: string, packageId: string, session: Stripe.Checkout.Session) {
   // Define credit packages
   const creditPackages: Record<string, { credits: number; bonus?: number }> = {
     'starter': { credits: 100 },
@@ -129,13 +129,13 @@ export async function POST(request: NextRequest) {
           
           await addCreditsToUser(userId, packageId, session);
           return NextResponse.json({ received: true });
-        } catch (error) {
-          console.error('❌ User not found by email:', customerEmail);
+        } catch (userError) {
+          console.error('❌ User not found by email:', customerEmail, userError);
           return NextResponse.json({ error: 'User not found' }, { status: 400 });
         }
       }
 
-      const [userId, packageId, priceId] = clientRef.split('|');
+      const [userId, packageId] = clientRef.split('|');
       
       if (!userId || !packageId) {
         console.error('❌ Invalid client reference format:', clientRef);
